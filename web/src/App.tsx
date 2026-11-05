@@ -16,6 +16,7 @@ import { MapPanels, Reveal } from "./ui/Reveal";
 import { Session, type WinResult } from "./ui/Session";
 import { Splash, shouldShowSplash } from "./ui/Splash";
 import { World2, board2 } from "./ui/World2";
+import { DailyBrand } from "./ui/DailyBrand";
 import { ShareText } from "./ui/ShareText";
 import { shareText } from "./game/shareText";
 import { cardSvg } from "./ui/shareCard";
@@ -197,7 +198,7 @@ function Daily({ date, n, onBack }: { date: string; n: number; onBack: () => voi
   const text = () =>
     shareText(
       b,
-      `Dani-Mander #${n}`,
+      dailyCopy.shareName(n),
       wins.map((w) => ({ assignment: w.assignment, moves: w.changed, hints: w.hintsUsed })),
       `${location.origin}${location.pathname}#daily=${date}`,
     );
@@ -205,7 +206,8 @@ function Daily({ date, n, onBack }: { date: string; n: number; onBack: () => voi
   if (stage === 2) {
     return (
       <div className="reveal">
-        <p className="daily-tag">📅 {b.title}</p>
+        <p className="daily-head"><DailyBrand /></p>
+        <p className="daily-tag">{b.title}</p>
         <h2>{dailyCopy.summary}</h2>
         <MapPanels
           board={b}
@@ -227,7 +229,9 @@ function Daily({ date, n, onBack }: { date: string; n: number; onBack: () => voi
   const task = b.tasks[stage];
   return (
     <>
-      <p className="daily-tag">📅 {b.title} · {dailyCopy.step(stage + 1, b.tasks.length)}</p>
+      <p className="daily-head">
+        <DailyBrand /> <span className="daily-tag">{b.title} · {dailyCopy.step(stage + 1, b.tasks.length)}</span>
+      </p>
       <Session
         key={`${stage}-${run}`}
         board={b}

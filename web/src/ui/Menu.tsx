@@ -1,4 +1,4 @@
-import { daily } from "../content/howto";
+import { DailyBrand } from "./DailyBrand";
 import { w1 as copy } from "../content/w1";
 import type { Board } from "../game/types";
 
@@ -31,8 +31,8 @@ export function Menu({ board, dailyId, dailyNumber, onPick, onDaily, onWorld, on
         <h2>{copy.menu.title}</h2>
         <ol>
           <li>
-            <button className="primary" onClick={onDaily}>
-              📅 {daily.menu(dailyNumber)} <Stars n={Math.min(readStars(dailyId, "pack"), readStars(dailyId, "crack"))} />
+            <button className="daily-btn" onClick={onDaily}>
+              <DailyBrand n={dailyNumber} /> <Stars n={Math.min(readStars(dailyId, "pack"), readStars(dailyId, "crack"))} />
             </button>
           </li>
         </ol>

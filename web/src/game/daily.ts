@@ -109,7 +109,7 @@ export function dailyBoard(world1: Board, date: string): Board {
       return {
         ...template,
         id: `daily-${date}`,
-        title: `Daily #${puzzleNumber(date)} · ${shape.name}`,
+        title: `#${puzzleNumber(date)} · ${shape.name}`,
         tiles: template.tiles.map((t, i) => ({
           ...t,
           votes: Object.fromEntries(template.parties.map((p, pi) => [p.id, votes[i][pi]])),

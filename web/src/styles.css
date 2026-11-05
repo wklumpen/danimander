@@ -213,3 +213,10 @@ main.fit { padding-left: 8px; padding-right: 8px; }
 .ctl { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 2px; line-height: 1; }
 .ctl-ic { font-size: 1.45rem; line-height: 1.1; }
 .ctl-lb { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.01em; }
+
+.daily-head { text-align: center; margin: 0; line-height: 1.25; }
+.daily-brand { font-weight: 800; font-size: 1rem; letter-spacing: -0.01em; color: var(--ink); white-space: nowrap; }
+.daily-brand .dani { color: var(--blue); }
+.daily-head .daily-tag { display: block; font-size: 0.78rem; }
+.daily-btn { border-width: 2px; background: #fff; box-shadow: 0 2px 0 var(--ink); }
+.daily-btn .daily-brand { font-size: 1.05rem; }

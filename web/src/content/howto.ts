@@ -17,7 +17,9 @@ export const howto = {
 };
 
 export const daily = {
-  menu: (n: number) => `Daily puzzle #${n}`,
+  // "The Daily Danimander": "Dani" is rendered in Government blue (see ui/DailyBrand.tsx)
+  brand: { the: "The Daily ", dani: "Dani", rest: "mander" },
+  shareName: (n: number) => `The Daily Danimander #${n}`,
   step: (i: number, n: number) => `part ${i} of ${n}`,
   summary: "Same votes. Both winners.",
   share: "Share result",
