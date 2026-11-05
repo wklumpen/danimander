@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import boardJson from "../../../boards/w2.json";
 import fixtures from "../../../boards/fixtures/w2.json";
 import { tilesChanged } from "./drift";
-import { allowedTargets, canPlay, drift, initPlay, overCap, playReducer, runElection, type PlayState } from "./play";
+import { allowedTargets, canPlay, crossesLimit, drift, initPlay, overCap, playReducer, runElection, type PlayState } from "./play";
 import { seatTally, winners } from "./score";
 import { hint } from "./solver";
 import type { Board, PowerId, Task } from "./types";
@@ -40,11 +40,31 @@ describe("w2 board", () => {
       }
     for (const s of b.solutions!.ta) expect(validatePlan(b, s.plan, k, true).some((p) => p.kind === "mixed")).toBe(true);
   });
-  it("the best Task A route needs exactly one toss", () => {
+  it("the best Task A route (erase penalty included) needs exactly one toss", () => {
     const best = Math.min(...b.solutions!.ta.map((s) => tilesChanged(b.start, s.plan)));
     expect(best).toBe(b.stats.bestDrift!.ta);
-    expect(best).toBeGreaterThan(cap);
-    expect(best).toBeLessThanOrEqual(2 * cap);
+    const need = best + b.rules.limitsScrutiny!;
+    expect(need).toBeGreaterThan(cap);
+    expect(need).toBeLessThanOrEqual(2 * cap);
+  });
+});
+
+describe("city limits", () => {
+  const reduce = playReducer(b);
+  it("while locked, a hex can't cross into a district on the other side", () => {
+    const s = initPlay(b);
+    const t = b.tiles.findIndex((_, i) => [...moveTargets(b, s.assignment, i)].some((d) => crossesLimit(b, s, i, d)));
+    const d = [...moveTargets(b, s.assignment, t)].find((x) => crossesLimit(b, s, t, x))!;
+    expect(allowedTargets(b, s, t).has(d)).toBe(false);
+    expect(reduce(reduce(s, { type: "tap", tile: t }), { type: "tap", tile: s.assignment.indexOf(d) }).assignment).toEqual(s.assignment);
+    const open = reduce(s, { type: "power", id: "limits" });
+    expect(crossesLimit(b, open, t, d)).toBe(false);
+  });
+  it("erasing the limits adds scrutiny, and can't be played if it would go over the cap", () => {
+    const s = reduce(initPlay(b), { type: "power", id: "limits" });
+    expect(drift(s)).toBe(b.rules.limitsScrutiny);
+    const nearCap = { ...initPlay(b), penalty: cap - 1 };
+    expect(canPlay(b, nearCap, "limits")).toBe(b.rules.limitsScrutiny! <= 1);
   });
 });
 
@@ -67,7 +87,7 @@ describe("scrutiny + toss", () => {
     expect(overCap(s, t, d)).toBe(true);
     expect(reduce(s, { type: "move", tile: t, district: d })).toBe(s);
     s = reduce(s, { type: "power", id: "toss" });
-    expect(drift(s)).toBe(0);
+    expect(drift(s)).toBe(0); // the erase penalty goes too: the old map no longer counts
     expect(canPlay(b, s, "toss")).toBe(false);
     expect(reduce(s, { type: "move", tile: t, district: d }).assignment[t]).toBe(d);
   });

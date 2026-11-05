@@ -41,6 +41,7 @@ CITY_CENTRE = (0, 4)  # the city: 14 hexes, two districts
 CITY_SIZE = 14
 TOWN_CENTRE = (5, 4)  # the town: a 7-hex rosette, one district — small enough to crack
 N_OPP = 18  # 18/35 ≈ 51% Opposition
+LIMITS_SCRUTINY = 2  # erasing the city limits is itself noticed
 # Design loop targets (exact, from full enumeration)
 A_SHARE_MAX = 0.25   # a Government majority should be the unusual map
 A_PAR = (5, 8)       # ...that takes real redrawing (cap = ceil(par/2) ≥ 3)
@@ -157,8 +158,11 @@ def main(seed: int = 7):
     votes = np.stack([1 - opp, opp], axis=1)  # [gov, opp]
     suburbs = {i for i in city | town if opp[i] == 0}
 
-    cap = math.ceil(par_a / 2)
-    assert cap < par_a <= 2 * cap
+    # Smallest cap where one toss suffices: the erase penalty plus the redraw must fit in two caps,
+    # but not in one (so the toss is required). The cap must also leave room to play the erase.
+    need = par_a + LIMITS_SCRUTINY
+    cap = max(LIMITS_SCRUTINY, math.ceil(need / 2))
+    assert cap < need <= 2 * cap
     print(f"start cut {cuts[s]}; A: {goal_a.sum()} maps ({goal_a.mean():.2%}), par {par_a}; "
           f"B: {goal_b.sum()} maps ({goal_b.mean():.2%}), par {par_b}; scrutiny cap {cap}")
 
@@ -202,7 +206,7 @@ def main(seed: int = 7):
         ],
         "adjacency": adj,
         "start": start.tolist(),
-        "rules": {"nDistricts": K, "band": 0.0, "muniLock": True, "powers": ["limits", "toss"], "driftCap": cap},
+        "rules": {"nDistricts": K, "band": 0.0, "muniLock": True, "powers": ["limits", "toss"], "driftCap": cap, "limitsScrutiny": LIMITS_SCRUTINY},
         "tasks": [
             {
                 "id": "ta",

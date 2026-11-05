@@ -5,6 +5,7 @@ export const w2 = {
   tooObvious: (cap: number) => `Too obvious — scrutiny is over ${cap}. The public would notice.`,
   mixed: "Limits are locked: districts can't mix city, town and country.",
   capBlocked: "Too obvious — the public would notice. Toss the report?",
+  lockBlocked: "Limits are locked: this hex can only join districts on its own side.",
   noRoom: "Scrutiny's maxed out. Undo a few moves and plan your toss.",
   seeding: "Tap a hex to start your new district.",
   cancel: "Cancel",

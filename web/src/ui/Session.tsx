@@ -4,7 +4,7 @@ import { quips } from "../content/quips";
 import { w1 as copy } from "../content/w1";
 import { w2 } from "../content/w2";
 import { tilesChanged } from "../game/drift";
-import { allowedTargets, canPlay, drift, initPlay, overCap, playReducer, runElection, type PlayInit } from "../game/play";
+import { allowedTargets, canPlay, crossesLimit, drift, initPlay, overCap, playReducer, runElection, type PlayInit } from "../game/play";
 import { seatTally, voteShare, winners } from "../game/score";
 import { hint } from "../game/solver";
 import type { Board as BoardT, PowerId, Task } from "../game/types";
@@ -59,8 +59,10 @@ export function Session({ board, task, init, onWin, winActions }: Props) {
   const startSeats = useMemo(() => seatTally(board, winners(board, board.start, board.rules.nDistricts)), [board]);
   const share = useMemo(() => voteShare(board), [board]);
   const targets = play.selected === null ? undefined : allowedTargets(board, play, play.selected);
-  const capBlocked =
-    play.selected !== null && targets!.size === 0 && moveTargets(board, play.assignment, play.selected).size > 0;
+  const neighbours = play.selected === null ? new Set<number>() : moveTargets(board, play.assignment, play.selected);
+  const lockBlocked =
+    play.selected !== null && neighbours.size > 0 && [...neighbours].every((d) => crossesLimit(board, play, play.selected!, d));
+  const capBlocked = play.selected !== null && !lockBlocked && targets!.size === 0 && neighbours.size > 0;
   const lastHex = play.selected !== null && isLastTile(play.assignment, play.selected);
   const goalParty = board.parties.find((p) => p.id === task.goal!.party)!;
   const cap = play.cap;
@@ -117,7 +119,8 @@ export function Session({ board, task, init, onWin, winActions }: Props) {
       canPlay: (id) => canPlay(board, play, id),
     });
     if (!h) {
-      setNote(copy.hud.noHint);
+      const solved = runElection(board, task, play.assignment, 0, k).met && problems.length === 0;
+      setNote(solved || cap === undefined ? copy.hud.noHint : w2.noRoom);
       return;
     }
     setHintsUsed((n) => n + 1);
@@ -144,9 +147,11 @@ export function Session({ board, task, init, onWin, winActions }: Props) {
       ? copy.hud.pickTile
       : lastHex
         ? copy.hud.lastHex
-        : capBlocked
-          ? w2.capBlocked
-          : copy.hud.pickTarget;
+        : lockBlocked
+          ? w2.lockBlocked
+          : capBlocked
+            ? w2.capBlocked
+            : copy.hud.pickTarget;
 
   const status = note ?? (tooObvious ? w2.tooObvious(cap!) : mixed ? w2.mixed : null);
 
@@ -159,7 +164,7 @@ export function Session({ board, task, init, onWin, winActions }: Props) {
             <svg viewBox="0 0 24 24" aria-hidden><use href="#ic-salamander" /></svg> {quip.text}
           </p>
         ) : (
-          <p className={lastHex || play.seeding || capBlocked ? "hint warn-soft" : "hint"}>
+          <p className={lastHex || play.seeding || capBlocked || lockBlocked ? "hint warn-soft" : "hint"}>
             {instruction}
             {play.seeding && (
               <button className="link inline" onClick={() => dispatch({ type: "cancelSeed" })}> {w2.cancel}</button>

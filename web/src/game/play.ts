@@ -13,6 +13,8 @@ type Snapshot = {
   baseline: number[];
   /** Once 🔇 Skip the Hearings is played, scrutiny stops changing. */
   frozenDrift: number | null;
+  /** Scrutiny added by playing cards (🚧 Erase the City Limits); cleared by 🗑️ Toss the Ref's Report. */
+  penalty: number;
   powersUsed: PowerId[];
 };
 
@@ -44,6 +46,7 @@ export function initPlay(board: Board, init: PlayInit = {}): PlayState {
     muniLock: init.muniLock ?? board.rules.muniLock,
     baseline: assignment,
     frozenDrift: null,
+    penalty: 0,
     powersUsed: [],
     history: [],
     selected: null,
@@ -58,12 +61,20 @@ const snap = (s: PlayState): Snapshot => ({
   muniLock: s.muniLock,
   baseline: s.baseline,
   frozenDrift: s.frozenDrift,
+  penalty: s.penalty,
   powersUsed: s.powersUsed,
 });
 
 /** Public scrutiny: hexes changed since the baseline, unless the hearings were skipped. */
-export function drift(s: Pick<PlayState, "assignment" | "baseline" | "frozenDrift">): number {
-  return s.frozenDrift ?? tilesChanged(s.baseline, s.assignment);
+export function drift(s: Pick<PlayState, "assignment" | "baseline" | "frozenDrift" | "penalty">): number {
+  return s.frozenDrift ?? tilesChanged(s.baseline, s.assignment) + s.penalty;
+}
+
+/** While limits are locked, a hex may only join a district on its own side (city / town / countryside). */
+export function crossesLimit(board: Board, s: PlayState, tile: number, district: number): boolean {
+  if (!s.muniLock) return false;
+  const other = s.assignment.findIndex((d, i) => d === district && i !== tile);
+  return other >= 0 && (board.tiles[other].muni ?? "") !== (board.tiles[tile].muni ?? "");
 }
 
 /** Would moving `tile` into `district` push public scrutiny past the cap? */
@@ -71,19 +82,23 @@ export function overCap(s: PlayState, tile: number, district: number): boolean {
   if (s.cap === undefined || s.frozenDrift !== null) return false;
   const next = [...s.assignment];
   next[tile] = district;
-  return tilesChanged(s.baseline, next) > s.cap;
+  return tilesChanged(s.baseline, next) + s.penalty > s.cap;
 }
 
 /** Districts this tile may move into right now: adjacent, not its last hex, and within scrutiny. */
 export function allowedTargets(board: Board, s: PlayState, tile: number): Set<number> {
   const out = new Set<number>();
-  for (const d of moveTargets(board, s.assignment, tile)) if (!overCap(s, tile, d)) out.add(d);
+  for (const d of moveTargets(board, s.assignment, tile)) if (!crossesLimit(board, s, tile, d) && !overCap(s, tile, d)) out.add(d);
   return out;
 }
 
 export function canPlay(board: Board, s: PlayState, id: PowerId): boolean {
   if (!board.rules.powers.includes(id) || s.powersUsed.includes(id)) return false;
-  if (id === "limits") return s.muniLock;
+  if (id === "limits") {
+    // Changing the boundary law is itself noticed: it can't push scrutiny over the cap.
+    const cost = board.rules.limitsScrutiny ?? 0;
+    return s.muniLock && (s.cap === undefined || s.frozenDrift !== null || drift(s) + cost <= s.cap);
+  }
   return true;
 }
 
@@ -110,7 +125,8 @@ export function playReducer(board: Board, init: PlayInit = {}) {
         }
         const target = s.assignment[a.tile];
         if (!moveTargets(board, s.assignment, s.selected).has(target)) return { ...s, selected: a.tile };
-        if (overCap(s, s.selected, target)) return s; // too obvious: refused, keep the hex picked up
+        // locked limits or too obvious: refused, keep the hex picked up
+        if (crossesLimit(board, s, s.selected, target) || overCap(s, s.selected, target)) return s;
         return move(s, s.selected, target);
       }
       case "select":
@@ -122,10 +138,10 @@ export function playReducer(board: Board, init: PlayInit = {}) {
         if (!canPlay(board, s, a.id)) return s;
         if (a.id === "seat") return { ...s, seeding: true, selected: null };
         const next = { ...s, history: [...s.history, snap(s)], powersUsed: [...s.powersUsed, a.id], selected: null };
-        if (a.id === "limits") return { ...next, muniLock: false };
+        if (a.id === "limits") return { ...next, muniLock: false, penalty: s.penalty + (board.rules.limitsScrutiny ?? 0) };
         if (a.id === "hearings") return { ...next, frozenDrift: drift(s) };
         // toss: the current map becomes the new reference; scrutiny back to zero (and counting again)
-        return { ...next, baseline: s.assignment, frozenDrift: null };
+        return { ...next, baseline: s.assignment, frozenDrift: null, penalty: 0 };
       }
       case "cancelSeed":
         return { ...s, seeding: false };

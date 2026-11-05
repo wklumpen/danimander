@@ -55,6 +55,8 @@ export type Board = {
     powers: PowerId[];
     /** Max "public scrutiny" (tiles changed vs baseline) before the election is blocked. */
     driftCap?: number;
+    /** Scrutiny added the moment 🚧 Erase the City Limits is played. */
+    limitsScrutiny?: number;
   };
   tasks: Task[];
   stats: {

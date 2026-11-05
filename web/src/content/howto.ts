@@ -9,7 +9,7 @@ export const howto = {
     { icon: "⭐", text: "Use as few moves as you can. Stuck? Tap Hint." },
   ],
   extras: [
-    { icon: "🏙️", text: "Dashed lines are city and town limits. While they're locked, a district can't mix them with the countryside." },
+    { icon: "🏙️", text: "Dashed lines are city and town limits. While they're locked, a hex can't cross them." },
     { icon: "👀", text: "Every hex you redraw adds public scrutiny. At the limit, you can't redraw any more." },
     { icon: "🃏", text: "Power cards bend the rules, once each. Both really happened in Alberta — tap one to see." },
   ],

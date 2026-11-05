@@ -68,8 +68,10 @@ def check_solutions(board: dict) -> list[str]:
             errs.append(f"task {task['id']}: bestDrift {best} != nearest shipped solution {min(dists)}")
     cap = rules.get("driftCap")
     best_a = board.get("stats", {}).get("bestDrift", {}).get(board["tasks"][0]["id"])
-    if cap is not None and best_a is not None and not (cap < best_a <= 2 * cap):
-        errs.append(f"scrutiny cap {cap} must force exactly one reset for best route {best_a}")
+    if cap is not None and best_a is not None:
+        need = best_a + rules.get("limitsScrutiny", 0)  # Task A also pays for erasing the limits
+        if not (cap < need <= 2 * cap):
+            errs.append(f"scrutiny cap {cap} must force exactly one reset (route needs {need})")
     return errs
 
 
