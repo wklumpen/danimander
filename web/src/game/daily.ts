@@ -3,6 +3,7 @@
  * Same date → same puzzle on every device (seeded RNG + deterministic enumeration order).
  */
 import { tilesChanged } from "./drift";
+import { shapeBoard, shapeFor } from "./shapes";
 import { boardPlans, cutEdges, planSeats } from "./solver";
 import type { Board, Task } from "./types";
 
@@ -69,7 +70,9 @@ function makeTasks(order: KindId[], maj: { id: string; label: string }, min: { i
 }
 
 /** Build the daily board from a template board (geometry, parties, icons). */
-export function dailyBoard(template: Board, date: string): Board {
+export function dailyBoard(world1: Board, date: string): Board {
+  const shape = shapeFor(puzzleNumber(date));
+  const template = shapeBoard(world1, shape);
   const r = rng(hashString(`danimander:${date}`));
   const plans = boardPlans(template);
   const k = template.rules.nDistricts;
@@ -106,7 +109,7 @@ export function dailyBoard(template: Board, date: string): Board {
       return {
         ...template,
         id: `daily-${date}`,
-        title: `Daily #${puzzleNumber(date)}`,
+        title: `Daily #${puzzleNumber(date)} · ${shape.name}`,
         tiles: template.tiles.map((t, i) => ({
           ...t,
           votes: Object.fromEntries(template.parties.map((p, pi) => [p.id, votes[i][pi]])),

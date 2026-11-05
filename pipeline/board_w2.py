@@ -179,8 +179,8 @@ def main(seed: int = 7):
     for i, t in enumerate(tiles):
         rc = (t["row"], t["col"])
         icons.append(
-            "city" if i in city else "town" if i in town else "pumpjack" if rc in PUMPJACKS
-            else "mountain" if rc in MOUNTAINS else "farm"
+            # one icon per land type, so "you can only join districts of the same land" reads at a glance
+            "city" if i in city else "town" if i in town else "farm"
         )
 
     board = {

@@ -66,6 +66,16 @@ function VoteBar({ board, share }: Pick<Props, "board" | "share">) {
   );
 }
 
+/** Control button: big icon, small label underneath. */
+function Ctl({ icon, label, onClick, disabled, pressed }: { icon: string; label: string; onClick: () => void; disabled?: boolean; pressed?: boolean }) {
+  return (
+    <button className="ctl" onClick={onClick} disabled={disabled} aria-pressed={pressed} aria-label={label}>
+      <span className="ctl-ic" aria-hidden>{icon}</span>
+      <span className="ctl-lb">{label}</span>
+    </button>
+  );
+}
+
 export function Hud(p: Props) {
   const status = [
     p.scrutiny ? null : `${copy.hud.changed} ${p.changed}`,
@@ -100,10 +110,10 @@ export function Hud(p: Props) {
         )}
       </div>
       <div className="controls">
-        <button onClick={p.onUndo} disabled={!p.canUndo}>↶ {copy.hud.undo}</button>
-        <button onClick={p.onReset}>⟲ {copy.hud.reset}</button>
-        <button onClick={p.onGhost} aria-pressed={p.ghost}>👁 {copy.hud.ghost}</button>
-        <button onClick={p.onHint}>💡 {copy.hud.hint}</button>
+        <Ctl icon="↶" label={copy.hud.undo} onClick={p.onUndo} disabled={!p.canUndo} />
+        <Ctl icon="⟲" label={copy.hud.reset} onClick={p.onReset} />
+        <Ctl icon="👁" label={copy.hud.ghost} onClick={p.onGhost} pressed={p.ghost} />
+        <Ctl icon="💡" label={copy.hud.hint} onClick={p.onHint} />
         <button className="primary" onClick={p.onRun} disabled={p.nInvalid > 0 || p.blocked}>
           🗳️ {copy.hud.run}
         </button>

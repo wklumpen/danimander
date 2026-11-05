@@ -209,3 +209,7 @@ main.fit { padding-left: 8px; padding-right: 8px; }
 .bg-green { background: var(--green); }
 .border-purple { border-color: var(--purple) !important; }
 .border-green { border-color: var(--green) !important; }
+
+.ctl { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 2px; line-height: 1; }
+.ctl-ic { font-size: 1.45rem; line-height: 1.1; }
+.ctl-lb { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.01em; }

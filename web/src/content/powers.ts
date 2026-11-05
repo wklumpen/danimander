@@ -12,7 +12,7 @@ export const powers: Record<PowerId, { icon: string; name: string; effect: strin
   limits: {
     icon: "🚧",
     name: "Erase the City Limits",
-    effect: "Districts may now mix city, town and countryside. Changing the law gets noticed: +2 scrutiny.",
+    effect: "Districts may now mix 🌾 country, 🏙️ city and 🏘️ town. Changing the law gets noticed: +2 scrutiny.",
     receipt: "card-limits",
     quip: "Who needs municipal boundaries?",
   },

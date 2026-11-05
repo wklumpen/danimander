@@ -30,7 +30,9 @@ type Route = { view: "play" } | { view: "w2" } | { view: "daily"; date: string }
 function dailyDate(h: string): string {
   const today = albertaDate();
   const d = h.split("=")[1];
-  return d && /^\d{4}-\d{2}-\d{2}$/.test(d) && d <= today && puzzleNumber(d) >= 1 ? d : today;
+  // Dev server only: allow future dates to preview upcoming puzzles.
+  const okDate = d && /^\d{4}-\d{2}-\d{2}$/.test(d) && (d <= today || import.meta.env.DEV) && puzzleNumber(d) >= 1;
+  return okDate ? d : today;
 }
 
 function routeFromHash(): Route {

@@ -25,7 +25,7 @@
     "opposition": 0
    },
    "muni": null,
-   "icon": "pumpjack",
+   "icon": "farm",
    "outline": null
   },
   {
@@ -207,7 +207,7 @@
     "opposition": 0
    },
    "muni": null,
-   "icon": "pumpjack",
+   "icon": "farm",
    "outline": null
   },
   {
@@ -277,7 +277,7 @@
     "opposition": 0
    },
    "muni": null,
-   "icon": "mountain",
+   "icon": "farm",
    "outline": null
   },
   {
@@ -347,7 +347,7 @@
     "opposition": 0
    },
    "muni": null,
-   "icon": "mountain",
+   "icon": "farm",
    "outline": null
   },
   {
@@ -403,7 +403,7 @@
     "opposition": 0
    },
    "muni": null,
-   "icon": "mountain",
+   "icon": "farm",
    "outline": null
   },
   {
@@ -459,7 +459,7 @@
     "opposition": 1
    },
    "muni": null,
-   "icon": "mountain",
+   "icon": "farm",
    "outline": null
   },
   {
