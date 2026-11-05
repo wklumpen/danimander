@@ -76,3 +76,20 @@ describe("swing", () => {
     expect(applySwing(tiles, "a", 0.9)[0].a).toBe(100);
   });
 });
+
+describe("share text", async () => {
+  const { seatSquares, shareText } = await import("./shareText");
+  it("renders seats as squares, Blue from the left", () => {
+    expect(seatSquares(b, b.start)).toBe("🟦🟦🟦🟧🟧");
+    expect(seatSquares(b, b.examples!.t1)).toBe("🟦🟦🟧🟧🟧");
+  });
+  it("one line per puzzle with move counts and the link", () => {
+    const text = shareText(b, "Dani-Mander #1", [
+      { assignment: b.examples!.t1, moves: 4 },
+      { assignment: b.examples!.t2, moves: 1, hints: 2 },
+    ], "http://danimander.ca/#daily=2026-11-05");
+    expect(text).toBe(
+      "I gerrymandered Dani-Mander #1 🦎\n🟦🟦🟧🟧🟧 in 4 moves\n🟦🟦🟦🟦🟦 in 1 move (+2 hints)\nCan you do it in fewer? http://danimander.ca/#daily=2026-11-05",
+    );
+  });
+});

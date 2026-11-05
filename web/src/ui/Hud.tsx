@@ -1,6 +1,8 @@
 import { w1 as copy } from "../content/w1";
 import type { Board } from "../game/types";
 
+const col = (p: { id: string; color?: string }) => p.color ?? p.id;
+
 type Props = {
   board: Board;
   seats: Record<string, number>;
@@ -31,16 +33,16 @@ function SeatBar({ board, seats, startSeats }: Pick<Props, "board" | "seats" | "
   const span = (n: number) => `calc(${n} * var(--seat) + ${Math.max(n - 1, 0)} * var(--seat-gap) + 2 * var(--seat-pad))`;
   return (
     <div className="seatbar" role="img" aria-label={`${a.label} ${seats[a.id]} seats, ${b.label} ${seats[b.id]} seats`}>
-      <span className={`seat-label text-${a.id}`}>{a.label} <b>{seats[a.id]}</b></span>
+      <span className={`seat-label text-${col(a)}`}>{a.label} <b>{seats[a.id]}</b></span>
       <div className="seat-row">
         {Array.from({ length: k }, (_, i) => {
-          const party = i < seats[a.id] ? a.id : i >= k - seats[b.id] ? b.id : null;
+          const party = i < seats[a.id] ? col(a) : i >= k - seats[b.id] ? col(b) : null;
           return <div key={i} className={`seat ${party ? `bg-${party}` : "bg-tie"}`} />;
         })}
-        {startSeats[a.id] > 0 && <div className={`bracket border-${a.id}`} style={{ left: "calc(-1 * var(--seat-pad))", width: span(startSeats[a.id]) }} />}
-        {startSeats[b.id] > 0 && <div className={`bracket border-${b.id}`} style={{ right: "calc(-1 * var(--seat-pad))", width: span(startSeats[b.id]) }} />}
+        {startSeats[a.id] > 0 && <div className={`bracket border-${col(a)}`} style={{ left: "calc(-1 * var(--seat-pad))", width: span(startSeats[a.id]) }} />}
+        {startSeats[b.id] > 0 && <div className={`bracket border-${col(b)}`} style={{ right: "calc(-1 * var(--seat-pad))", width: span(startSeats[b.id]) }} />}
       </div>
-      <span className={`seat-label right text-${b.id}`}><b>{seats[b.id]}</b> {b.label}</span>
+      <span className={`seat-label right text-${col(b)}`}><b>{seats[b.id]}</b> {b.label}</span>
     </div>
   );
 }
@@ -51,8 +53,8 @@ function VoteBar({ board, share }: Pick<Props, "board" | "share">) {
     <div className="votebar">
       <span className="muted">{copy.hud.votes}</span>
       <div className="vote-row" aria-label={`Votes: ${a.label} ${Math.round(share[a.id] * 100)}%, ${b.label} ${Math.round(share[b.id] * 100)}%`}>
-        <div className={`bg-${a.id}`} style={{ width: `${share[a.id] * 100}%` }}>{Math.round(share[a.id] * 100)}%</div>
-        <div className={`bg-${b.id}`} style={{ width: `${share[b.id] * 100}%` }}>{Math.round(share[b.id] * 100)}%</div>
+        <div className={`bg-${col(a)}`} style={{ width: `${share[a.id] * 100}%` }}>{Math.round(share[a.id] * 100)}%</div>
+        <div className={`bg-${col(b)}`} style={{ width: `${share[b.id] * 100}%` }}>{Math.round(share[b.id] * 100)}%</div>
       </div>
       <span className="muted">{copy.hud.votesNote}</span>
     </div>

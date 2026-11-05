@@ -40,11 +40,13 @@ describe("hint", () => {
 describe("daily", () => {
   it("is deterministic and valid across many dates", () => {
     const t0 = performance.now();
+    const seen = new Set<string>();
     for (let d = 0; d < 30; d++) {
       const date = new Date(Date.UTC(2026, 10, 6 + d)).toISOString().slice(0, 10);
       const b = dailyBoard(board, date);
       expect(validatePlan(b, b.start)).toEqual([]);
-      expect(b.tasks.map((t) => t.id)).toEqual(["pack", "crack"]);
+      expect([...b.tasks.map((t) => t.id)].sort()).toEqual(["crack", "pack"]);
+      seen.add(`${b.tasks[0].id}:${b.tasks.find((t) => t.id === "crack")!.goal!.party}`);
       for (const task of b.tasks) {
         expect(runElection(b, task, b.start).met).toBe(false);
         expect(parFor(b, task.goal!)).toBe(task.par);
@@ -53,6 +55,8 @@ describe("daily", () => {
       }
       expect(dailyBoard(board, date)).toEqual(b);
     }
+    // Over a month, both colours get the majority and both puzzles get to go first.
+    expect(seen.size).toBe(4);
     console.log(`30 dailies in ${Math.round(performance.now() - t0)} ms`);
   });
   it("numbers and dates", () => {

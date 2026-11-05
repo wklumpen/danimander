@@ -164,3 +164,4 @@ body:has(.og) { margin: 0; overflow: hidden; }
 /* Summary/reveal screens inside a fit route scroll normally. */
 main.fit:has(> .reveal) { height: auto; min-height: 100dvh; overflow: visible; }
 
+.share-text { margin: 0; padding: 10px 12px; background: #fff; border: 1.5px dashed var(--muted); border-radius: 10px; font: 600 0.95rem/1.45 system-ui, sans-serif; white-space: pre-wrap; word-break: break-word; text-align: left; user-select: all; -webkit-user-select: all; }

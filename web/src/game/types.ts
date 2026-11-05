@@ -20,12 +20,15 @@ export type Task = {
   goal: Goal | null;
   par: number | null;
   success: string | null;
+  /** Short label for this task's map in reveals, e.g. "Orange wins". */
+  caption?: string;
 };
 
 export type Board = {
   id: string;
   title: string;
-  parties: { id: PartyId; label: string }[];
+  /** `color` picks the palette (blue/orange); defaults to the party id. */
+  parties: { id: PartyId; label: string; color?: string }[];
   tiles: Tile[];
   adjacency: number[][];
   start: number[];
@@ -47,3 +50,8 @@ export type PlanState = {
   powersUsed: string[];
   nDistricts: number;
 };
+
+/** Palette key for a party (CSS classes .fill-*, .text-*, .bg-*, .border-*). */
+export function colorOf(board: Pick<Board, "parties">, partyId: PartyId): string {
+  return board.parties.find((p) => p.id === partyId)?.color ?? partyId;
+}

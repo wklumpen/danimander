@@ -9,7 +9,7 @@ import type { Board, Task } from "./types";
 export const DAILY_EPOCH = "2026-11-05"; // puzzle #1
 const PAR_RANGE: [number, number] = [3, 6];
 const MAX_GOAL_SHARE = 0.15;
-const N_ORANGE = 10;
+const N_MINORITY = 10; // 15 / 10 = 60 / 40
 
 /** Today's date in Alberta, YYYY-MM-DD. */
 export function albertaDate(now = new Date()): string {
@@ -44,12 +44,29 @@ const shuffle = <T,>(a: T[], r: () => number) => {
   return a;
 };
 
-type Kind = { id: "pack" | "crack"; prompt: string; success: string; party: string; minSeats: number };
-// Every daily is both ways on the same votes and the same start map: pack first, then crack.
-export const KINDS: Kind[] = [
-  { id: "pack", prompt: "Help Orange win 3 seats.", success: "Packed! Now flip it.", party: "orange", minSeats: 3 },
-  { id: "crack", prompt: "Same votes. Now give Blue all 5.", success: "Cracked! Same votes, opposite result.", party: "blue", minSeats: 5 },
-];
+type KindId = "pack" | "crack";
+
+/**
+ * Every daily is both ways on the same votes and the same start map. The date also decides
+ * which colour holds the 60% majority and which puzzle comes first, so neither colour is
+ * always the one doing (or getting) the gerrymandering.
+ */
+function makeTasks(order: KindId[], maj: { id: string; label: string }, min: { id: string; label: string }, k: number, pars: Record<KindId, number>): Task[] {
+  return order.map((id, i) => {
+    const first = i === 0;
+    const pack = id === "pack";
+    const goal = pack ? { party: min.id, minSeats: Math.ceil(k / 2), swings: [0] } : { party: maj.id, minSeats: k, swings: [0] };
+    const ask = pack ? `help ${min.label} win ${Math.ceil(k / 2)} seats.` : `give ${maj.label} all ${k}.`;
+    return {
+      id,
+      prompt: first ? ask[0].toUpperCase() + ask.slice(1) : `Same votes. Now ${ask}`,
+      goal,
+      par: pars[id],
+      success: `${pack ? "Packed!" : "Cracked!"} ${first ? "Now flip it." : "Same votes, opposite result."}`,
+      caption: pack ? `${min.label} wins` : `${maj.label} sweeps`,
+    };
+  });
+}
 
 /** Build the daily board from a template board (geometry, parties, icons). */
 export function dailyBoard(template: Board, date: string): Board {
@@ -61,39 +78,45 @@ export function dailyBoard(template: Board, date: string): Board {
   const minCut = Math.min(...cuts);
   const compact = plans.map((_, i) => i).filter((i) => cuts[i] <= minCut + 2);
 
+  const majIdx = r() < 0.5 ? 0 : 1; // which party has the 60%
+  const minIdx = 1 - majIdx;
+  const order: KindId[] = r() < 0.5 ? ["pack", "crack"] : ["crack", "pack"];
+  const [maj, min] = [template.parties[majIdx], template.parties[minIdx]];
+
   for (let attempt = 0; attempt < 2000; attempt++) {
-    const oranges = new Set(shuffle([...Array(n).keys()], r).slice(0, N_ORANGE));
-    const votes = [...Array(n).keys()].map((i) => (oranges.has(i) ? [0, 1] : [1, 0]));
-    const seats = plans.map((p) => planSeats(p, votes, k)); // [blue, orange]
-    const goals = KINDS.map((kind) => {
-      const pi = kind.party === "blue" ? 0 : 1;
-      return plans.map((_, i) => i).filter((i) => seats[i][pi] >= kind.minSeats);
+    const minority = new Set(shuffle([...Array(n).keys()], r).slice(0, N_MINORITY));
+    const votes = [...Array(n).keys()].map((i) => {
+      const v = [0, 0];
+      v[minority.has(i) ? minIdx : majIdx] = 1;
+      return v;
     });
-    if (goals.some((g) => !g.length || g.length / plans.length >= MAX_GOAL_SHARE)) continue;
+    const seats = plans.map((p) => planSeats(p, votes, k));
+    const goalIdx: Record<KindId, number[]> = {
+      pack: plans.map((_, i) => i).filter((i) => seats[i][minIdx] >= Math.ceil(k / 2)),
+      crack: plans.map((_, i) => i).filter((i) => seats[i][majIdx] >= k),
+    };
+    if (Object.values(goalIdx).some((g) => !g.length || g.length / plans.length >= MAX_GOAL_SHARE)) continue;
 
     for (const s of shuffle(compact.slice(), r).slice(0, 40)) {
-      if (seats[s][0] !== 3) continue; // fair start: 3–2 Blue
+      if (seats[s][majIdx] !== Math.ceil(k / 2)) continue; // fair start: majority wins 3–2
       const start = Array.from(plans[s]);
-      const pars = goals.map((g) => Math.min(...g.map((i) => tilesChanged(start, Array.from(plans[i])))));
-      if (pars.some((par) => par < PAR_RANGE[0] || par > PAR_RANGE[1])) continue;
-      const tasks: Task[] = KINDS.map((kind, j) => ({
-        id: kind.id,
-        prompt: kind.prompt,
-        goal: { party: kind.party, minSeats: kind.minSeats, swings: [0] },
-        par: pars[j],
-        success: kind.success,
-      }));
+      const parOf = (g: number[]) => Math.min(...g.map((i) => tilesChanged(start, Array.from(plans[i]))));
+      const pars = { pack: parOf(goalIdx.pack), crack: parOf(goalIdx.crack) };
+      if (Object.values(pars).some((par) => par < PAR_RANGE[0] || par > PAR_RANGE[1])) continue;
       return {
         ...template,
         id: `daily-${date}`,
         title: `Daily #${puzzleNumber(date)}`,
-        tiles: template.tiles.map((t, i) => ({ ...t, votes: { blue: votes[i][0], orange: votes[i][1] } })),
+        tiles: template.tiles.map((t, i) => ({
+          ...t,
+          votes: Object.fromEntries(template.parties.map((p, pi) => [p.id, votes[i][pi]])),
+        })),
         start,
-        tasks,
+        tasks: makeTasks(order, maj, min, k, pars),
         stats: {
           nPlans: plans.length,
           seatDist: {},
-          goalShare: Object.fromEntries(KINDS.map((kind, j) => [kind.id, goals[j].length / plans.length])),
+          goalShare: { pack: goalIdx.pack.length / plans.length, crack: goalIdx.crack.length / plans.length },
         },
         examples: undefined,
       };

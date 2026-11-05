@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { districtVotes } from "../game/score";
-import type { Board as BoardT } from "../game/types";
+import { colorOf, type Board as BoardT } from "../game/types";
 import { center, edges, hexPoints, viewBox } from "./hex";
 
 // Shape backup for colour (SPEC accessibility): ▲ first party, ● second.
@@ -135,7 +135,7 @@ export function Board(props: Props) {
             onPointerDown={interactive ? onDown(i) : undefined}
             aria-label={interactive ? `${board.parties[pi].label} ${t.icon}, district ${d + 1}` : undefined}
           >
-            <polygon points={hexPoints(t, 0.96)} className={`fill-${party}`} />
+            <polygon points={hexPoints(t, 0.96)} className={`fill-${colorOf(board, party)}`} />
             {isTarget && <polygon points={hexPoints(t, 1)} className={d === hintDistrict ? "wash hinted" : "wash"} pointerEvents="none" />}
             {invalid?.has(d) && <polygon points={hexPoints(t, 0.96)} fill="url(#hatch)" pointerEvents="none" />}
             {!mini && (
@@ -173,9 +173,9 @@ export function Board(props: Props) {
           b && (
             // Keyed on leader so a flip remounts the badge and replays the pop animation.
             <g key={`${b.d}-${b.leader}`} className="badge" pointerEvents="none" style={{ transformOrigin: `${b.x}px ${b.y}px` }}>
-              <circle cx={b.x} cy={b.y} r={mini ? 0.7 : 0.42} className={b.leader ? `fill-${b.leader} strong` : "fill-tie"} />
+              <circle cx={b.x} cy={b.y} r={mini ? 0.7 : 0.42} className={b.leader ? `fill-${colorOf(board, b.leader)} strong` : "fill-tie"} />
               {!mini && (
-                <text x={b.x} y={b.y + 0.13} className={b.leader ? `on-${b.leader}` : undefined}>
+                <text x={b.x} y={b.y + 0.13} className={b.leader ? `on-${colorOf(board, b.leader)}` : undefined}>
                   {b.a}–{b.b}
                 </text>
               )}

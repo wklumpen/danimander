@@ -6,6 +6,9 @@ import { seatTally, winners } from "../game/score";
 import type { Board as BoardT } from "../game/types";
 import { Board } from "./Board";
 import { ShareButtons } from "./ShareButtons";
+import { ShareText } from "./ShareText";
+import { shareText } from "../game/shareText";
+import { tilesChanged } from "../game/drift";
 import { cardSvg } from "./shareCard";
 
 export function MapPanels({ board, panels }: { board: BoardT; panels: [string, number[]][] }) {
@@ -21,7 +24,7 @@ export function MapPanels({ board, panels }: { board: BoardT; panels: [string, n
               {title}
               <br />
               {board.parties.map((p) => (
-                <b key={p.id} className={`text-${p.id}`}> {s[p.id]} </b>
+                <b key={p.id} className={`text-${p.color ?? p.id}`}> {s[p.id]} </b>
               ))}
             </figcaption>
           </figure>
@@ -64,6 +67,15 @@ export function Reveal({ board, maps, onAgain }: { board: BoardT; maps: Record<s
       <p>{copy.reveal.stat(board.stats.nPlans, pct)}</p>
       <p className="core">{copy.reveal.core}</p>
       <h3>{copy.reveal.shareTitle}</h3>
+      <ShareText
+        event="w1"
+        text={shareText(
+          board,
+          board.title,
+          [t1, t2].map((a) => ({ assignment: a, moves: tilesChanged(board.start, a) })),
+          `${location.origin}${location.pathname}`,
+        )}
+      />
       <ShareButtons svg={svg} link={link} />
       <button onClick={onAgain}>{copy.reveal.again}</button>
     </div>

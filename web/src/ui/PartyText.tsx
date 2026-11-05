@@ -8,7 +8,7 @@ export function PartyText({ text, board }: { text: string; board: Board }) {
     <>
       {text.split(re).map((part, i) => {
         const party = board.parties.find((p) => p.label === part);
-        return party ? <span key={i} className={`text-${party.id} party-name`}>{part}</span> : part;
+        return party ? <span key={i} className={`text-${party.color ?? party.id} party-name`}>{part}</span> : part;
       })}
     </>
   );

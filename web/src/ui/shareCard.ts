@@ -1,5 +1,5 @@
 import { seatTally, winners } from "../game/score";
-import type { Board } from "../game/types";
+import { colorOf, type Board } from "../game/types";
 import { center, edges, hexPoints, viewBox } from "./hex";
 import { iconSymbols } from "./icons";
 
@@ -24,7 +24,7 @@ function miniMap(board: Board, assignment: number[], x: number, y: number, w: nu
   const tiles = board.tiles
     .map((t) => {
       const party = parties.find((p) => t.votes[p] > 0) ?? parties[0];
-      return `<polygon points="${hexPoints(t, 0.96)}" fill="${COLORS[party]?.[0] ?? "#ccc"}"/>`;
+      return `<polygon points="${hexPoints(t, 0.96)}" fill="${COLORS[colorOf(board, party)]?.[0] ?? "#ccc"}"/>`;
     })
     .join("");
   const borders = edges(board.tiles)
@@ -37,7 +37,7 @@ function miniMap(board: Board, assignment: number[], x: number, y: number, w: nu
       const cs = board.tiles.filter((_, i) => assignment[i] === d).map(center);
       const cx = cs.reduce((a, c) => a + c[0], 0) / cs.length;
       const cy = cs.reduce((a, c) => a + c[1], 0) / cs.length;
-      return `<circle cx="${cx}" cy="${cy}" r="0.55" fill="${p ? COLORS[p][1] : "#888"}" stroke="#fff" stroke-width="0.08"/>`;
+      return `<circle cx="${cx}" cy="${cy}" r="0.55" fill="${p ? COLORS[colorOf(board, p)][1] : "#888"}" stroke="#fff" stroke-width="0.08"/>`;
     })
     .join("");
   return `<g transform="translate(${ox} ${oy}) scale(${s})">${tiles}<g stroke="#1d1b22" stroke-width="0.14" stroke-linecap="round">${borders}</g>${badges}</g>`;
@@ -46,7 +46,7 @@ function miniMap(board: Board, assignment: number[], x: number, y: number, w: nu
 function seatLine(board: Board, assignment: number[]): string {
   const t = seatTally(board, winners(board, assignment, board.rules.nDistricts));
   return board.parties
-    .map((p) => `<tspan fill="${p.id === "orange" ? "#b34f00" : (COLORS[p.id]?.[1] ?? "#000")}" font-weight="800">${esc(p.label)} ${t[p.id]}</tspan>`)
+    .map((p) => `<tspan fill="${colorOf(board, p.id) === "orange" ? "#b34f00" : (COLORS[colorOf(board, p.id)]?.[1] ?? "#000")}" font-weight="800">${esc(p.label)} ${t[p.id]}</tspan>`)
     .join(`<tspan fill="#6b6672">  ·  </tspan>`);
 }
 
