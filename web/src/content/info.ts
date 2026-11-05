@@ -26,7 +26,7 @@ const S = {
 export const checked = "2026-11-05";
 
 export const info = {
-  title: "What's actually happening",
+  title: "It's a game here. In Alberta, it's real.",
   back: "← Back to the game",
   sixtyTitle: "The 60-second version",
   receiptsTitle: "The receipts",

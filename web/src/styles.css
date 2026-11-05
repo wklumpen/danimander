@@ -14,12 +14,16 @@
 }
 * { box-sizing: border-box; }
 body { margin: 0; }
-main { max-width: 480px; margin: 0 auto; padding: 12px 12px 24px; min-height: 100dvh; display: flex; flex-direction: column; gap: 8px; }
+main { max-width: 480px; margin: 0 auto; padding: 8px 12px 16px; min-height: 100dvh; display: flex; flex-direction: column; gap: 6px; }
+/* While a puzzle is on screen everything fits one phone screen: the board takes what's left. */
+main.fit { height: 100dvh; min-height: 0; padding-bottom: 6px; overflow: hidden; }
 header { text-align: center; }
-.prompt { font-size: 1.35rem; margin: 4px 0 0; }
-.hint { margin: 2px 0 0; color: var(--muted); font-size: 0.9rem; }
+.prompt { font-size: 1.2rem; margin: 0; line-height: 1.2; }
+.hint { margin: 2px 0 0; color: var(--muted); font-size: 0.85rem; line-height: 1.25; min-height: 1.25em; }
 
-.board { width: 100%; height: auto; max-height: 58dvh; touch-action: none; user-select: none; -webkit-user-select: none; outline: none; }
+.board-wrap { flex: 1 1 auto; min-height: 120px; display: flex; justify-content: center; }
+.board { width: 100%; height: auto; touch-action: none; user-select: none; -webkit-user-select: none; outline: none; }
+main.fit .board { height: 100%; }
 .board.mini { max-height: none; }
 .tile { cursor: pointer; }
 .tile polygon { transition: fill 0.25s, transform 0.2s; transform-box: fill-box; transform-origin: center; }
@@ -53,14 +57,14 @@ header { text-align: center; }
 .muted { color: var(--muted); }
 .warn { color: var(--invalid); font-weight: 600; }
 .controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-.controls button { padding: 6px 4px; font-size: 0.9rem; }
+.controls button { padding: 4px 2px; font-size: 0.85rem; min-height: 44px; line-height: 1.1; }
 button { min-height: 44px; font: inherit; border-radius: 10px; border: 1.5px solid var(--ink); background: #fff; color: var(--ink); padding: 6px 10px; cursor: pointer; }
 button:disabled { opacity: 0.4; cursor: default; }
 button[aria-pressed="true"] { background: var(--ink); color: #fff; }
 button.primary { background: var(--ink); color: #fff; font-weight: 700; }
-.controls .primary { grid-column: 1 / -1; font-size: 1.1rem; }
+.controls .primary { grid-column: 1 / -1; font-size: 1.05rem; min-height: 46px; }
 
-.result { position: sticky; bottom: 8px; background: #fff; border: 2px solid var(--ink); border-radius: 14px; padding: 12px; text-align: center; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15); animation: pop 0.25s ease-out; }
+.result { position: fixed; left: 50%; transform: translateX(-50%); bottom: 10px; width: calc(min(480px, 100vw) - 24px); z-index: 6; max-height: 80dvh; overflow: auto; background: #fff; border: 2px solid var(--ink); border-radius: 14px; padding: 12px; text-align: center; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15); animation: pop 0.25s ease-out; }
 .result.win { border-color: var(--select); }
 .result p { margin: 4px 0 10px; font-weight: 600; }
 .stars { font-size: 2rem; color: var(--select); letter-spacing: 4px; }
@@ -77,10 +81,11 @@ button.primary { background: var(--ink); color: #fff; font-weight: 700; }
 .badge { animation: pop 0.35s ease-out; transform-box: fill-box; }
 .small { font-size: 0.8rem; }
 
-.topnav { display: flex; justify-content: space-between; align-items: center; }
+.topnav { display: flex; justify-content: space-between; align-items: center; height: 40px; flex: none; }
 .icon-btn { min-width: 44px; padding: 0; font-size: 1.3rem; border: none; background: none; }
-.mascot { width: 40px; height: 40px; }
-footer { margin-top: auto; padding-top: 16px; text-align: center; font-size: 0.8rem; color: var(--muted); }
+.mascot { width: 36px; height: 36px; }
+footer { margin-top: auto; padding-top: 4px; text-align: center; font-size: 0.8rem; color: var(--muted); flex: none; }
+footer p { margin: 0; }
 footer a { color: var(--ink); font-weight: 600; font-size: 0.95rem; }
 a { color: var(--purple); }
 button.link { border: none; background: none; padding: 0; min-height: 44px; color: var(--purple); text-align: left; }
@@ -118,7 +123,31 @@ body:has(.og) { margin: 0; overflow: hidden; }
 .howto li { display: flex; gap: 10px; align-items: flex-start; }
 .howto .ic { width: 1.6em; text-align: center; font-size: 1.2rem; }
 .sheet .alberta { display: block; margin: 12px 0; font-weight: 600; }
-.hint-note { color: var(--muted); font-size: 0.8rem; }
 @media (prefers-reduced-motion: reduce) { .wash.hinted, .lifted { animation: none; } }
 .daily-tag { text-align: center; margin: 0; font-weight: 700; color: var(--purple); }
 .warn-soft { color: var(--invalid); }
+
+.hud { display: flex; flex-direction: column; gap: 5px; flex: none; }
+.bg-purple { background: var(--purple); }
+.bg-green { background: var(--green); }
+.bg-tie { background: #bbb; }
+.border-purple { border-color: var(--purple) !important; }
+.border-green { border-color: var(--green) !important; }
+.seat-labels { display: flex; justify-content: space-between; align-items: baseline; font-size: 0.9rem; }
+.seat-labels b { font-size: 1.15rem; }
+.seat-labels .muted { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.06em; }
+.seat-row { position: relative; display: flex; gap: 3px; height: 26px; margin: 4px 3px 3px; }
+.seat { flex: 1; border-radius: 3px; transition: background-color 0.35s ease; }
+.bracket { position: absolute; top: -4px; bottom: -4px; border: 2.5px solid; border-radius: 6px; pointer-events: none; opacity: 0.55; margin: 0 -3px; }
+.votebar { display: flex; align-items: center; gap: 6px; font-size: 0.72rem; }
+.vote-row { flex: 1; display: flex; height: 14px; border-radius: 7px; overflow: hidden; }
+.vote-row div { color: #fff; font-size: 0.65rem; font-weight: 700; line-height: 14px; text-align: center; opacity: 0.75; }
+.status { font-size: 0.8rem; min-height: 1.2em; line-height: 1.2; text-align: center; }
+
+.overlay.center { align-items: center; padding: 16px; }
+.splash { background: var(--paper); max-width: 420px; border-radius: 18px; padding: 20px 20px 14px; text-align: center; animation: pop 0.25s ease-out; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3); }
+.splash h1 { margin: 0; font-size: 2rem; letter-spacing: -0.02em; color: var(--purple); }
+.splash .tagline { font-style: italic; color: var(--muted); margin: 4px 0 14px; }
+.splash p { margin: 8px 0; }
+.splash button.primary { width: 100%; margin: 12px 0 8px; font-size: 1.15rem; min-height: 52px; }
+.splash-mascot { width: 84px; height: 84px; }

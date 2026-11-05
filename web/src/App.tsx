@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import boardJson from "../../boards/w1.json";
 import { track } from "./analytics";
 import { daily as dailyCopy } from "./content/howto";
-import { info } from "./content/info";
 import { share } from "./content/share";
 import { w1 as copy } from "./content/w1";
 import { albertaDate, dailyBoard, puzzleNumber } from "./game/daily";
@@ -15,6 +14,7 @@ import { Info } from "./ui/Info";
 import { Menu } from "./ui/Menu";
 import { MapPanels, Reveal } from "./ui/Reveal";
 import { Session, type WinResult } from "./ui/Session";
+import { Splash, shouldShowSplash } from "./ui/Splash";
 import { cardSvg } from "./ui/shareCard";
 
 const board = boardJson as unknown as BoardT;
@@ -61,6 +61,7 @@ function Game() {
   const [maps, setMaps] = useState<Record<string, number[]>>({});
   const [menu, setMenu] = useState(false);
   const [howto, setHowto] = useState(false);
+  const [intro, setIntro] = useState(() => shouldShowSplash() && routeFromHash().view !== "info");
   const today = albertaDate();
   const dailyN = puzzleNumber(today);
 
@@ -135,8 +136,9 @@ function Game() {
     );
   }
 
+  const fits = route.view === "daily" || (route.view === "play" && taskIdx < playable.length);
   return (
-    <main>
+    <main className={fits ? "fit" : undefined}>
       <Sprite />
       <nav className="topnav">
         <button className="icon-btn" onClick={() => setMenu(true)} aria-label={copy.nav.menu}>☰</button>
@@ -148,7 +150,6 @@ function Game() {
       {body}
       <footer>
         <a href="#info">{copy.nav.info} →</a>
-        <p>{info.analytics}</p>
       </footer>
       {menu && (
         <Menu
@@ -162,6 +163,7 @@ function Game() {
         />
       )}
       {howto && <HowTo board={board} onClose={() => setHowto(false)} />}
+      {intro && <Splash onClose={() => setIntro(false)} />}
     </main>
   );
 }

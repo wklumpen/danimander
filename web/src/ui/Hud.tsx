@@ -19,38 +19,74 @@ type Props = {
   note?: string | null;
 };
 
+/**
+ * Election-night seat bar: one box per seat, first party filling from the left, second from
+ * the right. Outlined brackets mark the original map's split, so a flipped seat visibly
+ * crosses its bracket.
+ */
+function SeatBar({ board, seats, startSeats }: Pick<Props, "board" | "seats" | "startSeats">) {
+  const [a, b] = board.parties;
+  const k = board.rules.nDistricts;
+  const pct = (n: number) => `${(n / k) * 100}%`;
+  return (
+    <div className="seatbar" role="img" aria-label={`${a.label} ${seats[a.id]} seats, ${b.label} ${seats[b.id]} seats`}>
+      <div className="seat-labels">
+        <span className={`text-${a.id}`}>{a.label} <b>{seats[a.id]}</b></span>
+        <span className="muted">{copy.hud.seats}</span>
+        <span className={`text-${b.id}`}><b>{seats[b.id]}</b> {b.label}</span>
+      </div>
+      <div className="seat-row">
+        {Array.from({ length: k }, (_, i) => {
+          const party = i < seats[a.id] ? a.id : i >= k - seats[b.id] ? b.id : null;
+          return <div key={i} className={`seat ${party ? `bg-${party}` : "bg-tie"}`} />;
+        })}
+        <div className={`bracket border-${a.id}`} style={{ left: 0, width: pct(startSeats[a.id]) }} />
+        <div className={`bracket border-${b.id}`} style={{ right: 0, width: pct(startSeats[b.id]) }} />
+      </div>
+    </div>
+  );
+}
+
+function VoteBar({ board, share }: Pick<Props, "board" | "share">) {
+  const [a, b] = board.parties;
+  return (
+    <div className="votebar">
+      <span className="muted">{copy.hud.votes}</span>
+      <div className="vote-row" aria-label={`Votes: ${a.label} ${Math.round(share[a.id] * 100)}%, ${b.label} ${Math.round(share[b.id] * 100)}%`}>
+        <div className={`bg-${a.id}`} style={{ width: `${share[a.id] * 100}%` }}>{Math.round(share[a.id] * 100)}%</div>
+        <div className={`bg-${b.id}`} style={{ width: `${share[b.id] * 100}%` }}>{Math.round(share[b.id] * 100)}%</div>
+      </div>
+      <span className="muted">{copy.hud.votesNote}</span>
+    </div>
+  );
+}
+
 export function Hud(p: Props) {
+  const status = [
+    `${copy.hud.changed} ${p.changed}`,
+    p.hintsUsed > 0 ? copy.hud.hintsUsed(p.hintsUsed) : null,
+  ].filter(Boolean);
   return (
     <div className="hud">
-      <div className="stats" aria-live="polite">
-        <div>
-          <span className="k">{copy.hud.seats}</span>
-          {p.board.parties.map((party) => (
-            <span key={party.id} className={`chip text-${party.id}`}>
-              {party.label} <b>{p.seats[party.id]}</b>
-              <small> ({copy.hud.was} {p.startSeats[party.id]})</small>
-            </span>
-          ))}
-        </div>
-        <div>
-          <span className="k">{copy.hud.votes}</span>
-          {p.board.parties.map((party) => (
-            <span key={party.id} className={`chip text-${party.id}`}>
-              {Math.round(p.share[party.id] * 100)}%
-            </span>
-          ))}
-          <small className="muted">{copy.hud.votesNote}</small>
-        </div>
-        <div>
-          <span className="k">{copy.hud.changed}</span> <b>{p.changed}</b>
-          {p.nInvalid > 0 && <span className="warn"> · {copy.hud.invalid(p.nInvalid)}</span>}
-        </div>
-        {(p.note || p.hintsUsed > 0) && <div className="hint-note">{p.note ?? copy.hud.hintsUsed(p.hintsUsed)}</div>}
+      <div aria-live="polite">
+        <SeatBar board={p.board} seats={p.seats} startSeats={p.startSeats} />
+      </div>
+      <VoteBar board={p.board} share={p.share} />
+      <div className="status" aria-live="polite">
+        {p.note ? (
+          <span>{p.note}</span>
+        ) : (
+          <>
+            <span>{status.join(" · ")}</span>
+            {p.nInvalid > 0 && <span className="warn"> · {copy.hud.invalid(p.nInvalid)}</span>}
+            {p.ghost && <span className="muted"> · {copy.hud.ghostCaption}</span>}
+          </>
+        )}
       </div>
       <div className="controls">
         <button onClick={p.onUndo} disabled={!p.canUndo}>↶ {copy.hud.undo}</button>
         <button onClick={p.onReset}>⟲ {copy.hud.reset}</button>
-        <button onClick={p.onGhost} aria-pressed={p.ghost}>┄ {copy.hud.ghost}</button>
+        <button onClick={p.onGhost} aria-pressed={p.ghost}>👁 {copy.hud.ghost}</button>
         <button onClick={p.onHint}>💡 {copy.hud.hint}</button>
         <button className="primary" onClick={p.onRun} disabled={p.nInvalid > 0}>
           🗳️ {copy.hud.run}

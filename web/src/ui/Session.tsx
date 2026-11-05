@@ -88,7 +88,8 @@ export function Session({ board, task, onWin, winActions }: Props) {
           {play.selected === null ? copy.hud.pickTile : lastHex ? copy.hud.lastHex : copy.hud.pickTarget}
         </p>
       </header>
-      <Board
+      <div className="board-wrap">
+        <Board
         board={board}
         assignment={play.assignment}
         nDistricts={k}
@@ -109,6 +110,7 @@ export function Session({ board, task, onWin, winActions }: Props) {
           dispatch({ type: "move", tile, district });
         }}
       />
+      </div>
       <Hud
         board={board}
         seats={seats}
