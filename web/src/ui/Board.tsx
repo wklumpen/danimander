@@ -175,7 +175,7 @@ export function Board(props: Props) {
             <g key={`${b.d}-${b.leader}`} className="badge" pointerEvents="none" style={{ transformOrigin: `${b.x}px ${b.y}px` }}>
               <circle cx={b.x} cy={b.y} r={mini ? 0.7 : 0.42} className={b.leader ? `fill-${b.leader} strong` : "fill-tie"} />
               {!mini && (
-                <text x={b.x} y={b.y + 0.13}>
+                <text x={b.x} y={b.y + 0.13} className={b.leader ? `on-${b.leader}` : undefined}>
                   {b.a}–{b.b}
                 </text>
               )}

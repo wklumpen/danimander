@@ -20,9 +20,9 @@ describe("parity with pipeline/validate.py fixtures", () => {
 });
 
 describe("board w1", () => {
-  it("start map is valid and 3-2 Purple", () => {
+  it("start map is valid and 3-2 Blue", () => {
     expect(validatePlan(b, b.start)).toEqual([]);
-    expect(seatTally(b, winners(b, b.start, k))).toEqual({ purple: 3, green: 2 });
+    expect(seatTally(b, winners(b, b.start, k))).toEqual({ blue: 3, orange: 2 });
   });
 
   it("single move makes the map temporarily invalid", () => {
@@ -56,7 +56,7 @@ describe("encode", () => {
   it("round-trips a plan", () => {
     const assignment = [...b.start];
     assignment[3] = (assignment[3] + 1) % k;
-    const plan = { boardId: "w1", taskId: "t1", role: "green", assignment, powersUsed: [], nDistricts: k };
+    const plan = { boardId: "w1", taskId: "t1", role: "orange", assignment, powersUsed: [], nDistricts: k };
     expect(decodePlan(encodePlan(plan, b.start), () => b.start)).toEqual(plan);
   });
 

@@ -170,12 +170,14 @@ function Game() {
 
 function Daily({ date, n, onBack }: { date: string; n: number; onBack: () => void }) {
   const b = useMemo(() => dailyBoard(board, date), [date]);
+  const [stage, setStage] = useState(0); // 0 = pack, 1 = crack, 2 = summary
+  const [wins, setWins] = useState<WinResult[]>([]);
   const [run, setRun] = useState(0);
   const [copied, setCopied] = useState(false);
   useEffect(() => track("daily-start"), []);
 
-  const shareResult = async (r: WinResult) => {
-    const text = dailyCopy.solved(n, r.stars, r.changed, r.hintsUsed);
+  const shareResult = async () => {
+    const text = dailyCopy.solved(n, wins.map((w) => w.stars), wins.reduce((s, w) => s + w.hintsUsed, 0));
     const url = `${location.origin}${location.pathname}#daily`;
     try {
       if (navigator.share) await navigator.share({ text, url });
@@ -189,21 +191,44 @@ function Daily({ date, n, onBack }: { date: string; n: number; onBack: () => voi
     }
   };
 
+  if (stage === 2) {
+    return (
+      <div className="reveal">
+        <p className="daily-tag">📅 {b.title}</p>
+        <h2>{dailyCopy.summary}</h2>
+        <MapPanels
+          board={b}
+          panels={[
+            [copy.reveal.original, b.start],
+            [dailyCopy.packMap, wins[0].assignment],
+            [dailyCopy.crackMap, wins[1].assignment],
+          ]}
+        />
+        <p className="core">{copy.reveal.core}</p>
+        <div className="share">
+          <button className="primary" onClick={shareResult}>📤 {copied ? dailyCopy.copied : dailyCopy.share}</button>
+          <p className="muted small">{dailyCopy.tomorrow}</p>
+          <button onClick={onBack}>{dailyCopy.back}</button>
+        </div>
+      </div>
+    );
+  }
+
+  const task = b.tasks[stage];
   return (
     <>
-      <p className="daily-tag">📅 {b.title}</p>
+      <p className="daily-tag">📅 {b.title} · {dailyCopy.step(stage + 1, b.tasks.length)}</p>
       <Session
-        key={run}
+        key={`${stage}-${run}`}
         board={b}
-        task={b.tasks[0]}
-        onWin={() => track("daily-done")}
-        winActions={(r) => (
+        task={task}
+        onWin={(r) => {
+          setWins((w) => [...w.slice(0, stage), r]);
+          track(`daily-${task.id}`);
+        }}
+        winActions={() => (
           <div className="share">
-            <button className="primary" onClick={() => shareResult(r)}>
-              📤 {copied ? dailyCopy.copied : dailyCopy.share}
-            </button>
-            <p className="muted small">{dailyCopy.tomorrow}</p>
-            <button onClick={onBack}>{dailyCopy.back}</button>
+            <button className="primary" onClick={() => setStage(stage + 1)}>{copy.result.next} →</button>
             <button className="link" onClick={() => setRun((x) => x + 1)}>{copy.hud.reset}</button>
           </div>
         )}

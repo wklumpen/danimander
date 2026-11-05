@@ -44,10 +44,13 @@ describe("daily", () => {
       const date = new Date(Date.UTC(2026, 10, 6 + d)).toISOString().slice(0, 10);
       const b = dailyBoard(board, date);
       expect(validatePlan(b, b.start)).toEqual([]);
-      const task = b.tasks[0];
-      expect(runElection(b, task, b.start).met).toBe(false);
-      expect(parFor(b, task.goal!)).toBe(task.par);
-      expect(task.par).toBeGreaterThanOrEqual(3);
+      expect(b.tasks.map((t) => t.id)).toEqual(["pack", "crack"]);
+      for (const task of b.tasks) {
+        expect(runElection(b, task, b.start).met).toBe(false);
+        expect(parFor(b, task.goal!)).toBe(task.par);
+        expect(task.par).toBeGreaterThanOrEqual(3);
+        expect(task.par).toBeLessThanOrEqual(6);
+      }
       expect(dailyBoard(board, date)).toEqual(b);
     }
     console.log(`30 dailies in ${Math.round(performance.now() - t0)} ms`);

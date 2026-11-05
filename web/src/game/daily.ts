@@ -9,7 +9,7 @@ import type { Board, Task } from "./types";
 export const DAILY_EPOCH = "2026-11-05"; // puzzle #1
 const PAR_RANGE: [number, number] = [3, 6];
 const MAX_GOAL_SHARE = 0.15;
-const N_GREEN = 10;
+const N_ORANGE = 10;
 
 /** Today's date in Alberta, YYYY-MM-DD. */
 export function albertaDate(now = new Date()): string {
@@ -45,9 +45,10 @@ const shuffle = <T,>(a: T[], r: () => number) => {
 };
 
 type Kind = { id: "pack" | "crack"; prompt: string; success: string; party: string; minSeats: number };
-const KINDS: Kind[] = [
-  { id: "pack", prompt: "Help Green win 3 seats.", success: "Packed!", party: "green", minSeats: 3 },
-  { id: "crack", prompt: "Give Purple all 5 seats.", success: "Cracked!", party: "purple", minSeats: 5 },
+// Every daily is both ways on the same votes and the same start map: pack first, then crack.
+export const KINDS: Kind[] = [
+  { id: "pack", prompt: "Help Orange win 3 seats.", success: "Packed! Now flip it.", party: "orange", minSeats: 3 },
+  { id: "crack", prompt: "Same votes. Now give Blue all 5.", success: "Cracked! Same votes, opposite result.", party: "blue", minSeats: 5 },
 ];
 
 /** Build the daily board from a template board (geometry, parties, icons). */
@@ -60,36 +61,40 @@ export function dailyBoard(template: Board, date: string): Board {
   const minCut = Math.min(...cuts);
   const compact = plans.map((_, i) => i).filter((i) => cuts[i] <= minCut + 2);
 
-  for (let attempt = 0; attempt < 500; attempt++) {
-    const greens = new Set(shuffle([...Array(n).keys()], r).slice(0, N_GREEN));
-    const votes = [...Array(n).keys()].map((i) => (greens.has(i) ? [0, 1] : [1, 0]));
-    const seats = plans.map((p) => planSeats(p, votes, k)); // [purple, green]
-    const kind = KINDS[Math.floor(r() * KINDS.length)];
-    const pi = kind.party === "purple" ? 0 : 1;
-    const goalIdx = plans.map((_, i) => i).filter((i) => seats[i][pi] >= kind.minSeats);
-    if (!goalIdx.length || goalIdx.length / plans.length >= MAX_GOAL_SHARE) continue;
+  for (let attempt = 0; attempt < 2000; attempt++) {
+    const oranges = new Set(shuffle([...Array(n).keys()], r).slice(0, N_ORANGE));
+    const votes = [...Array(n).keys()].map((i) => (oranges.has(i) ? [0, 1] : [1, 0]));
+    const seats = plans.map((p) => planSeats(p, votes, k)); // [blue, orange]
+    const goals = KINDS.map((kind) => {
+      const pi = kind.party === "blue" ? 0 : 1;
+      return plans.map((_, i) => i).filter((i) => seats[i][pi] >= kind.minSeats);
+    });
+    if (goals.some((g) => !g.length || g.length / plans.length >= MAX_GOAL_SHARE)) continue;
 
     for (const s of shuffle(compact.slice(), r).slice(0, 40)) {
-      if (seats[s][0] !== 3) continue; // fair start: 3–2 Purple
+      if (seats[s][0] !== 3) continue; // fair start: 3–2 Blue
       const start = Array.from(plans[s]);
-      let par = Infinity;
-      for (const g of goalIdx) par = Math.min(par, tilesChanged(start, Array.from(plans[g])));
-      if (par < PAR_RANGE[0] || par > PAR_RANGE[1]) continue;
-      const task: Task = {
-        id: "daily",
+      const pars = goals.map((g) => Math.min(...g.map((i) => tilesChanged(start, Array.from(plans[i])))));
+      if (pars.some((par) => par < PAR_RANGE[0] || par > PAR_RANGE[1])) continue;
+      const tasks: Task[] = KINDS.map((kind, j) => ({
+        id: kind.id,
         prompt: kind.prompt,
         goal: { party: kind.party, minSeats: kind.minSeats, swings: [0] },
-        par,
+        par: pars[j],
         success: kind.success,
-      };
+      }));
       return {
         ...template,
         id: `daily-${date}`,
         title: `Daily #${puzzleNumber(date)}`,
-        tiles: template.tiles.map((t, i) => ({ ...t, votes: { purple: votes[i][0], green: votes[i][1] } })),
+        tiles: template.tiles.map((t, i) => ({ ...t, votes: { blue: votes[i][0], orange: votes[i][1] } })),
         start,
-        tasks: [task],
-        stats: { nPlans: plans.length, seatDist: {}, goalShare: { daily: goalIdx.length / plans.length } },
+        tasks,
+        stats: {
+          nPlans: plans.length,
+          seatDist: {},
+          goalShare: Object.fromEntries(KINDS.map((kind, j) => [kind.id, goals[j].length / plans.length])),
+        },
         examples: undefined,
       };
     }

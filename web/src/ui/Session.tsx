@@ -1,4 +1,5 @@
-import { useMemo, useReducer, useState } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { quips } from "../content/quips";
 import { w1 as copy } from "../content/w1";
 import { tilesChanged } from "../game/drift";
 import { initPlay, playReducer, runElection } from "../game/play";
@@ -9,6 +10,7 @@ import { isLastTile, moveTargets, validatePlan } from "../game/validate";
 import { Board } from "./Board";
 import { Confetti } from "./Confetti";
 import { Hud } from "./Hud";
+import { PartyText } from "./PartyText";
 
 export type WinResult = ReturnType<typeof runElection> & { assignment: number[]; hintsUsed: number };
 
@@ -50,6 +52,29 @@ export function Session({ board, task, onWin, winActions }: Props) {
   const lastHex = play.selected !== null && isLastTile(play.assignment, play.selected);
   const goalParty = board.parties.find((p) => p.id === task.goal!.party)!;
 
+  // The Dani-Mander's commentary: react to flips, broken districts, and every few moves.
+  const [quip, setQuip] = useState<{ text: string; n: number } | null>(null);
+  const prev = useRef({ assignment: board.start, moves: 0, invalid: 0 });
+  const decks = useRef<Record<string, string[]>>({});
+  const draw = (pool: keyof typeof quips & ("flip" | "invalid" | "move")) => {
+    if (!decks.current[pool]?.length) decks.current[pool] = [...quips[pool]].sort(() => Math.random() - 0.5);
+    return decks.current[pool].pop()!;
+  };
+  useEffect(() => {
+    const p = prev.current;
+    const moved = play.history.length > p.moves; // ignore undo/reset
+    const before = seatTally(board, winners(board, p.assignment, k));
+    prev.current = { assignment: play.assignment, moves: play.history.length, invalid: invalid.size };
+    if (!moved) return;
+    const flipped = board.parties.some((party) => before[party.id] !== seats[party.id]);
+    let text: string | null = null;
+    if (flipped) text = draw("flip");
+    else if (invalid.size > p.invalid && Math.random() < 0.5) text = draw("invalid");
+    else if (play.history.length % quips.everyNMoves === 0) text = draw("move");
+    if (text) setQuip((q) => ({ text: text!, n: (q?.n ?? 0) + 1 }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [play.assignment]);
+
   const clearTransient = () => {
     setMissed(null);
     setNote(null);
@@ -83,10 +108,16 @@ export function Session({ board, task, onWin, winActions }: Props) {
   return (
     <>
       <header>
-        <h1 className="prompt">{task.prompt}</h1>
-        <p className={lastHex ? "hint warn-soft" : "hint"}>
-          {play.selected === null ? copy.hud.pickTile : lastHex ? copy.hud.lastHex : copy.hud.pickTarget}
-        </p>
+        <h1 className="prompt"><PartyText text={task.prompt} board={board} /></h1>
+        {quip && !result && play.selected === null ? (
+          <p key={quip.n} className="hint quip-line" aria-hidden onAnimationEnd={() => setQuip(null)}>
+            <svg viewBox="0 0 24 24" aria-hidden><use href="#ic-salamander" /></svg> {quip.text}
+          </p>
+        ) : (
+          <p className={lastHex ? "hint warn-soft" : "hint"}>
+            {play.selected === null ? copy.hud.pickTile : lastHex ? copy.hud.lastHex : copy.hud.pickTarget}
+          </p>
+        )}
       </header>
       <div className="board-wrap">
         <Board

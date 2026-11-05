@@ -13,8 +13,12 @@ export const howto = {
 
 export const daily = {
   menu: (n: number) => `Daily puzzle #${n}`,
-  solved: (n: number, stars: number, moved: number, hints: number) =>
-    `Dani-Mander daily #${n} ${"★".repeat(stars)}${"☆".repeat(3 - stars)} — ${moved} hexes moved${hints ? `, ${hints} hint${hints > 1 ? "s" : ""}` : ""}`,
+  step: (i: number, n: number) => `part ${i} of ${n}`,
+  summary: "Same votes. Both winners.",
+  packMap: "Orange wins",
+  crackMap: "Blue sweeps",
+  solved: (n: number, stars: number[], hints: number) =>
+    `Dani-Mander daily #${n}: packed ${"★".repeat(stars[0])}${"☆".repeat(3 - stars[0])}, cracked ${"★".repeat(stars[1])}${"☆".repeat(3 - stars[1])}${hints ? ` (${hints} hint${hints > 1 ? "s" : ""})` : ""}. Same votes, opposite winners.`,
   share: "Share result",
   copied: "Copied!",
   back: "Back to the main game",

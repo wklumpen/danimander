@@ -47,7 +47,7 @@ export function Reveal({ board, maps, onAgain }: { board: BoardT; maps: Record<s
     [board, t1],
   );
   const link = `${location.origin}${location.pathname}${encodePlan(
-    { boardId: board.id, taskId: "t1", role: "green", assignment: t1, powersUsed: [], nDistricts: board.rules.nDistricts },
+    { boardId: board.id, taskId: "t1", role: "orange", assignment: t1, powersUsed: [], nDistricts: board.rules.nDistricts },
     board.start,
   )}`;
   return (
@@ -57,8 +57,8 @@ export function Reveal({ board, maps, onAgain }: { board: BoardT; maps: Record<s
         board={board}
         panels={[
           [copy.reveal.original, board.start],
-          [copy.reveal.greenMap, t1],
-          [copy.reveal.purpleMap, t2],
+          [copy.reveal.orangeMap, t1],
+          [copy.reveal.blueMap, t2],
         ]}
       />
       <p>{copy.reveal.stat(board.stats.nPlans, pct)}</p>

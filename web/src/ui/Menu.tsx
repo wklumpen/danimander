@@ -31,7 +31,7 @@ export function Menu({ board, dailyId, dailyNumber, onPick, onDaily, onAlberta, 
         <ol>
           <li>
             <button className="primary" onClick={onDaily}>
-              📅 {daily.menu(dailyNumber)} <Stars n={readStars(dailyId, "daily")} />
+              📅 {daily.menu(dailyNumber)} <Stars n={Math.min(readStars(dailyId, "pack"), readStars(dailyId, "crack"))} />
             </button>
           </li>
         </ol>

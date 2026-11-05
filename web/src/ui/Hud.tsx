@@ -27,22 +27,20 @@ type Props = {
 function SeatBar({ board, seats, startSeats }: Pick<Props, "board" | "seats" | "startSeats">) {
   const [a, b] = board.parties;
   const k = board.rules.nDistricts;
-  const pct = (n: number) => `${(n / k) * 100}%`;
+  // Bracket width for n square boxes, in terms of the CSS box/gap variables.
+  const span = (n: number) => `calc(${n} * var(--seat) + ${Math.max(n - 1, 0)} * var(--seat-gap) + 2 * var(--seat-pad))`;
   return (
     <div className="seatbar" role="img" aria-label={`${a.label} ${seats[a.id]} seats, ${b.label} ${seats[b.id]} seats`}>
-      <div className="seat-labels">
-        <span className={`text-${a.id}`}>{a.label} <b>{seats[a.id]}</b></span>
-        <span className="muted">{copy.hud.seats}</span>
-        <span className={`text-${b.id}`}><b>{seats[b.id]}</b> {b.label}</span>
-      </div>
+      <span className={`seat-label text-${a.id}`}>{a.label} <b>{seats[a.id]}</b></span>
       <div className="seat-row">
         {Array.from({ length: k }, (_, i) => {
           const party = i < seats[a.id] ? a.id : i >= k - seats[b.id] ? b.id : null;
           return <div key={i} className={`seat ${party ? `bg-${party}` : "bg-tie"}`} />;
         })}
-        <div className={`bracket border-${a.id}`} style={{ left: 0, width: pct(startSeats[a.id]) }} />
-        <div className={`bracket border-${b.id}`} style={{ right: 0, width: pct(startSeats[b.id]) }} />
+        {startSeats[a.id] > 0 && <div className={`bracket border-${a.id}`} style={{ left: "calc(-1 * var(--seat-pad))", width: span(startSeats[a.id]) }} />}
+        {startSeats[b.id] > 0 && <div className={`bracket border-${b.id}`} style={{ right: "calc(-1 * var(--seat-pad))", width: span(startSeats[b.id]) }} />}
       </div>
+      <span className={`seat-label right text-${b.id}`}><b>{seats[b.id]}</b> {b.label}</span>
     </div>
   );
 }

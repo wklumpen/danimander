@@ -27,10 +27,10 @@ export const w1 = {
   reveal: {
     headline: "No votes changed. No weird shapes.",
     original: "Original",
-    greenMap: "Your Green map",
-    purpleMap: "Your Purple map",
+    orangeMap: "Your Orange map",
+    blueMap: "Your Blue map",
     stat: (nPlans: number, pct: string) =>
-      `Of ${nPlans.toLocaleString("en-CA")} possible maps, only ${pct} give Green 3 seats — you found one.`,
+      `Of ${nPlans.toLocaleString("en-CA")} possible maps, only ${pct} give Orange 3 seats — you found one.`,
     core: "Same votes, different map, different winner — that's why the people who win elections shouldn't draw the map.",
     again: "Play again",
     shareTitle: "Show someone what you did",

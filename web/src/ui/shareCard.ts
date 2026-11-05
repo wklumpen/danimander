@@ -8,8 +8,8 @@ import { iconSymbols } from "./icons";
 // avoid the base64 font-subset step entirely.
 const FONT = `system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif`;
 const COLORS: Record<string, [string, string]> = {
-  purple: ["#c2a5cf", "#762a83"],
-  green: ["#a6dba0", "#1b7837"],
+  blue: ["#a3b4ce", "#184484"],
+  orange: ["#ffc799", "#ff7300"],
 };
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
@@ -46,7 +46,7 @@ function miniMap(board: Board, assignment: number[], x: number, y: number, w: nu
 function seatLine(board: Board, assignment: number[]): string {
   const t = seatTally(board, winners(board, assignment, board.rules.nDistricts));
   return board.parties
-    .map((p) => `<tspan fill="${COLORS[p.id]?.[1] ?? "#000"}" font-weight="800">${esc(p.label)} ${t[p.id]}</tspan>`)
+    .map((p) => `<tspan fill="${p.id === "orange" ? "#b34f00" : (COLORS[p.id]?.[1] ?? "#000")}" font-weight="800">${esc(p.label)} ${t[p.id]}</tspan>`)
     .join(`<tspan fill="#6b6672">  ·  </tspan>`);
 }
 
@@ -69,7 +69,7 @@ export function cardSvg(board: Board, left: number[], right: number[], copy: Car
   <text x="880" y="494" text-anchor="middle" font-family="${FONT}" font-size="28">${seatLine(board, right)}</text>
   <text x="600" y="560" text-anchor="middle" font-family="${FONT}" font-size="30" font-weight="600" fill="#1d1b22">${esc(copy.core)}</text>
   <use href="#ic-salamander" xlink:href="#ic-salamander" x="60" y="560" width="64" height="64"/>
-  <text x="1140" y="606" text-anchor="end" font-family="${FONT}" font-size="30" font-weight="800" fill="#762a83">${esc(copy.url)}</text>
+  <text x="1140" y="606" text-anchor="end" font-family="${FONT}" font-size="30" font-weight="800" fill="#1d1b22">${esc(copy.url)}</text>
 </svg>`;
 }
 
