@@ -22,12 +22,15 @@ type Props = {
   ghost?: boolean;
   onTap?: (tile: number) => void;
   onAssign?: (tile: number, district: number) => void;
+  /** District the hint suggests; pulses on top of the normal target highlight. */
+  hintDistrict?: number | null;
   mini?: boolean;
   label?: string;
 };
 
 export function Board(props: Props) {
-  const { board, assignment, nDistricts, selected = null, targets, invalid, ghost, onTap, onAssign, mini, label } = props;
+  const { board, assignment, nDistricts, selected = null, targets, invalid, ghost, onTap, onAssign, hintDistrict = null, mini, label } = props;
+  const picking = selected !== null && !!targets;
   const allEdges = useMemo(() => edges(board.tiles), [board]);
   const vb = useMemo(() => viewBox(board.tiles), [board]);
   const parties = board.parties.map((p) => p.id);
@@ -115,9 +118,15 @@ export function Board(props: Props) {
         const party = parties.find((p) => t.votes[p] > 0) ?? parties[0];
         const pi = parties.indexOf(party);
         const d = assignment[i];
-        const isTarget = selected !== null && targets?.has(d);
+        const isTarget = picking && targets!.has(d);
         const [cx, cy] = center(t);
-        const cls = ["tile", isTarget && "target", selected === i && "selected", interactive && focus === i && "focus"];
+        const cls = [
+          "tile",
+          isTarget && "target",
+          picking && !isTarget && selected !== i && "dim",
+          selected === i && "selected",
+          interactive && focus === i && "focus",
+        ];
         return (
           <g
             key={t.id}
@@ -127,6 +136,7 @@ export function Board(props: Props) {
             aria-label={interactive ? `${board.parties[pi].label} ${t.icon}, district ${d + 1}` : undefined}
           >
             <polygon points={hexPoints(t, 0.96)} className={`fill-${party}`} />
+            {isTarget && <polygon points={hexPoints(t, 1)} className={d === hintDistrict ? "wash hinted" : "wash"} pointerEvents="none" />}
             {invalid?.has(d) && <polygon points={hexPoints(t, 0.96)} fill="url(#hatch)" pointerEvents="none" />}
             {!mini && (
               <>
@@ -147,6 +157,17 @@ export function Board(props: Props) {
           const bad = invalid && (invalid.has(assignment[e.a]) || (e.b !== null && invalid.has(assignment[e.b])));
           return <line key={k} {...lineProps(e)} className={bad ? "border bad" : "border"} />;
         })}
+      {picking &&
+        allEdges
+          .filter((e) => {
+            const a = assignment[e.a];
+            const b = e.b === null ? null : assignment[e.b];
+            return a !== b && (targets!.has(a) || (b !== null && targets!.has(b)));
+          })
+          .map((e, k) => <line key={`t${k}`} {...lineProps(e)} className="target-edge" />)}
+      {picking && selected !== null && (
+        <polygon points={hexPoints(board.tiles[selected], 0.9)} className="lifted" pointerEvents="none" />
+      )}
       {badges.map(
         (b) =>
           b && (

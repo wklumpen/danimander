@@ -14,6 +14,9 @@ type Props = {
   onReset: () => void;
   onGhost: () => void;
   onRun: () => void;
+  onHint: () => void;
+  hintsUsed: number;
+  note?: string | null;
 };
 
 export function Hud(p: Props) {
@@ -42,11 +45,13 @@ export function Hud(p: Props) {
           <span className="k">{copy.hud.changed}</span> <b>{p.changed}</b>
           {p.nInvalid > 0 && <span className="warn"> · {copy.hud.invalid(p.nInvalid)}</span>}
         </div>
+        {(p.note || p.hintsUsed > 0) && <div className="hint-note">{p.note ?? copy.hud.hintsUsed(p.hintsUsed)}</div>}
       </div>
       <div className="controls">
         <button onClick={p.onUndo} disabled={!p.canUndo}>↶ {copy.hud.undo}</button>
         <button onClick={p.onReset}>⟲ {copy.hud.reset}</button>
         <button onClick={p.onGhost} aria-pressed={p.ghost}>┄ {copy.hud.ghost}</button>
+        <button onClick={p.onHint}>💡 {copy.hud.hint}</button>
         <button className="primary" onClick={p.onRun} disabled={p.nInvalid > 0}>
           🗳️ {copy.hud.run}
         </button>

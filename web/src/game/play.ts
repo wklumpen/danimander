@@ -12,6 +12,7 @@ export type PlayState = {
 
 export type PlayAction =
   | { type: "tap"; tile: number }
+  | { type: "select"; tile: number }
   | { type: "move"; tile: number; district: number }
   | { type: "undo" }
   | { type: "reset" };
@@ -31,6 +32,8 @@ export function playReducer(board: Board) {
         if (!moveTargets(board, s.assignment, s.selected).has(target)) return { ...s, selected: a.tile };
         return move(s, s.selected, target);
       }
+      case "select":
+        return { ...s, selected: a.tile };
       case "move":
         if (!moveTargets(board, s.assignment, a.tile).has(a.district)) return s;
         return move(s, a.tile, a.district);
@@ -50,7 +53,7 @@ function move(s: PlayState, tile: number, district: number): PlayState {
 }
 
 /** Run the task's election(s). Goal is met only if it holds under every listed swing. */
-export function runElection(board: Board, task: Task, assignment: number[]) {
+export function runElection(board: Board, task: Task, assignment: number[], hintsUsed = 0) {
   const k = board.rules.nDistricts;
   const startWinners = winners(board, board.start, k);
   const results = (task.goal?.swings ?? [0]).map((s) => {
@@ -60,7 +63,7 @@ export function runElection(board: Board, task: Task, assignment: number[]) {
   const goal = task.goal;
   const met = !!goal && results.every((r) => r[goal.party] >= goal.minSeats);
   const changed = tilesChanged(board.start, assignment);
-  return { seats: results[0], met, changed, stars: met && task.par !== null ? stars(changed, task.par) : 0 };
+  return { seats: results[0], met, changed, stars: met && task.par !== null ? Math.min(stars(changed, task.par), hintsUsed ? 2 : 3) : 0 };
 }
 
 export function stars(changed: number, par: number): number {
