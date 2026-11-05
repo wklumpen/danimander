@@ -125,6 +125,7 @@ export const info = {
     "Worlds 1–2 are made-up boards. Every possible fair-sized, connected map was counted by computer so the 'X% of maps' numbers are exact.",
     "Districts win by most votes. Vote totals never change in the game — only lines.",
     "'Tiles moved' compares your map to the original after matching districts up, so renaming a district doesn't count as a change.",
+    "Inspired by Mapmaker: The Gerrymandering Game, a board game by the Lafair siblings.",
   ],
 
   actTitle: "What you can do",
