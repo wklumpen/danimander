@@ -26,7 +26,7 @@ const S = {
 export const checked = "2026-11-05";
 
 export const info = {
-  title: "It's a game here. In Alberta, it's real.",
+  title: "This is a game. In Alberta, it's real.",
   back: "← Back to the game",
   sixtyTitle: "The 60-second version",
   receiptsTitle: "The receipts",
@@ -63,7 +63,7 @@ export const info = {
     },
     {
       date: "Mar 23, 2026",
-      text: "The final report arrives with a majority report (the chair and the two Opposition nominees) and a minority report from the two government-nominated members, John Evans and Julian Martin. The chair adds an addendum suggesting 91 seats if the Legislature won't accept the majority map.",
+      text: "The independent commission's final report is split. Its majority (the chair and the two Opposition nominees) recommends one map; a minority report from its two government-nominated members, John Evans and Julian Martin, proposes another. The chair adds an addendum suggesting 91 seats if the Legislature won't accept the majority map.",
       sources: [S.final, S.appointees, S.ablawg],
       verify: "The final report lists members but not who nominated whom; nominator attribution comes from news coverage.",
     },
@@ -74,7 +74,7 @@ export const info = {
     },
     {
       date: "Jun 2–9, 2026",
-      text: "The committee (four government MLAs, two Opposition) appoints a five-person advisory panel: a chair and two members nominated by the Premier, two nominated by the Opposition Leader. Its mandate: 91 ridings.",
+      text: "The committee (four government MLAs, two Opposition) appoints a separate five-person advisory panel: a chair and two members nominated by the Premier, two nominated by the Opposition Leader. Its mandate: 91 ridings.",
       sources: [S.ssceb],
     },
     {
@@ -101,21 +101,12 @@ export const info = {
     },
     {
       // Final report, s. XI Conclusion (majority), pp. 63–64; Calgary map: p. 22.
-      text: "The commission's majority objected \"in the strongest terms to this unconstitutional minority report\" and warned that \"accepting the minority report would certainly invite a court to write the next chapter.\" It called the minority's Calgary map \"quite likely unconstitutional.\"",
+      text: "Inside the independent commission itself (its March 2026 report — not the later advisory panel), the three-member majority objected \"in the strongest terms to this unconstitutional minority report\": the alternative map from the two government-nominated commissioners. It warned that \"accepting the minority report would certainly invite a court to write the next chapter,\" and called the minority's Calgary map \"quite likely unconstitutional.\"",
       sources: [S.final],
     },
     {
       text: "The commission itself said it could have used more seats: had it been allowed, it 'may very well have proposed a map of at least 91 electoral divisions'.",
       sources: [S.final],
-    },
-  ] satisfies Item[],
-
-  rationaleTitle: "The government's case, in its own words",
-  rationale: [
-    {
-      text: "The governing caucus said its new process would \"ensure effective representation as guaranteed by the Canadian Charter of Rights and Freedoms\", and pointed to the commission majority's own view that more seats would have given \"more effective representation\".",
-      sources: [S.ucpStatement],
-      verify: "Quotes captured via an automated reader — confirm verbatim against the statement before launch.",
     },
   ] satisfies Item[],
 

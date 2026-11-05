@@ -51,13 +51,6 @@ export function Info({ onBack }: { onBack: () => void }) {
         ))}
       </ul>
 
-      <h3>{info.rationaleTitle}</h3>
-      {info.rationale.map((r) => (
-        <p key={r.text}>
-          {r.text} <Sources sources={r.sources} />
-        </p>
-      ))}
-
       <h2>{info.powersTitle}</h2>
       {info.powers.map((p) => (
         <p key={p.id} id={p.id}>

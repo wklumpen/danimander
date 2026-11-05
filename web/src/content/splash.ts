@@ -8,6 +8,6 @@ export const splash = {
     "No public hearings required.",
   ],
   go: "Grab the pen ✏️",
-  footnote: "A free game about gerrymandering. It's a game here. In Alberta, it's real.",
+  footnote: "A free game about gerrymandering. This is a game. In Alberta, it's real.",
   analytics: "We count visits and level completions. No cookies, no personal data, no tracking across sites.",
 };

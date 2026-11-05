@@ -5,7 +5,6 @@ Every claim has sources; all were opened and read on 2026-11-05 except where not
 
 - [ ] **Bill 31 municipal/community-boundary change** — confirm wording against the statute (SA 2024 c 17; CanLII blocks automated fetches). The government fact sheet only says the factors were "updated and clarified"; the CTV article body couldn't be read automatically. Used in the timeline and the 🚧 card.
 - [ ] **Who nominated Evans and Martin** — the final report lists members but not nominators; attribution comes from Sherwood Park News.
-- [ ] **UCP caucus statement quotes** — confirm verbatim.
 - [ ] **"First time in history"** — sourced to Lethbridge Herald reporter narration (Apr 30, 2026). Consider a second source.
 - [ ] Re-run `npm run check-links` and re-read the timeline right before launch — the situation is moving (committee report tabled Nov 2026; map not yet law).
 

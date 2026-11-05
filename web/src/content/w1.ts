@@ -44,9 +44,9 @@ export const w1 = {
     ],
     soon: "Coming soon",
     play: "Keep the Government in power",
-    alberta: "It's a game here. In Alberta, it's real →",
+    alberta: "This is a game. In Alberta, it's real →",
     reveal: "The reveal",
     close: "Close",
   },
-  nav: { menu: "Levels", howto: "How to play", info: "It's a game here. In Alberta, it's real" },
+  nav: { menu: "Levels", howto: "How to play", info: "This is a game. In Alberta, it's real" },
 };
