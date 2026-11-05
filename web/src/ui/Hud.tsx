@@ -8,7 +8,7 @@ type Props = {
   board: Board;
   nDistricts: number;
   /** World 2+: public scrutiny vs the cap (replaces "hexes moved"). */
-  scrutiny?: { value: number; cap: number; frozen: boolean };
+  scrutiny?: { value: number; cap: number };
   /** Election blocked for a reason other than invalid districts (e.g. scrutiny over the cap). */
   blocked?: boolean;
   seats: Record<string, number>;
@@ -83,11 +83,10 @@ export function Hud(p: Props) {
   ].filter(Boolean);
   const sc = p.scrutiny;
   const meter = sc && (
-    <span className={`meter${sc.value > sc.cap ? " over" : ""}`} title={sc.frozen ? w2.frozen : undefined}>
+    <span className={`meter${sc.value > sc.cap ? " over" : ""}`}>
       {w2.scrutiny}
       <span className="meter-bar" aria-hidden><i style={{ width: `${Math.min(100, (sc.value / sc.cap) * 100)}%` }} /></span>
       {sc.value}/{sc.cap}
-      {sc.frozen && " 🔇"}
     </span>
   );
   return (

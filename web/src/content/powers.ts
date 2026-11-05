@@ -2,26 +2,12 @@ import type { PowerId } from "../game/types";
 
 // Power cards (World 2+). Each links to its real-world receipt on the info page.
 export const powers: Record<PowerId, { icon: string; name: string; effect: string; receipt: string; quip: string }> = {
-  seat: {
-    icon: "➕",
-    name: "Bonus Seat",
-    effect: "Add one more district. Tap a hex to start it, then grow it.",
-    receipt: "card-seat",
-    quip: "More seats, more representation. For some.",
-  },
   limits: {
     icon: "🚧",
     name: "Erase the City Limits",
     effect: "Districts may now mix 🌾 country, 🏙️ city and 🏘️ town. Changing the law gets noticed: +2 scrutiny.",
     receipt: "card-limits",
     quip: "Who needs municipal boundaries?",
-  },
-  hearings: {
-    icon: "🔇",
-    name: "Skip the Hearings",
-    effect: "From now on, your changes stop adding to public scrutiny.",
-    receipt: "card-hearings",
-    quip: "No public hearings required.",
   },
   toss: {
     icon: "🗑️",

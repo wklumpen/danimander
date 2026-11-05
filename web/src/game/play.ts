@@ -2,7 +2,7 @@ import { tilesChanged } from "./drift";
 import { seatTally, winners } from "./score";
 import { applySwing } from "./swing";
 import { seatsNeeded, type Board, type PowerId, type Task } from "./types";
-import { isLastTile, moveTargets } from "./validate";
+import { moveTargets } from "./validate";
 
 /** Everything undo restores. */
 type Snapshot = {
@@ -11,8 +11,6 @@ type Snapshot = {
   muniLock: boolean;
   /** Scrutiny is measured against this map (🗑️ Toss the Ref's Report moves it). */
   baseline: number[];
-  /** Once 🔇 Skip the Hearings is played, scrutiny stops changing. */
-  frozenDrift: number | null;
   /** Scrutiny added by playing cards (🚧 Erase the City Limits); cleared by 🗑️ Toss the Ref's Report. */
   penalty: number;
   powersUsed: PowerId[];
@@ -23,8 +21,6 @@ export type PlayState = Snapshot & {
   cap?: number;
   history: Snapshot[];
   selected: number | null;
-  /** Waiting for the player to tap the seed hex for ➕ Bonus Seat. */
-  seeding: boolean;
 };
 
 export type PlayAction =
@@ -32,7 +28,6 @@ export type PlayAction =
   | { type: "select"; tile: number }
   | { type: "move"; tile: number; district: number }
   | { type: "power"; id: PowerId }
-  | { type: "cancelSeed" }
   | { type: "undo" }
   | { type: "reset" };
 
@@ -45,12 +40,10 @@ export function initPlay(board: Board, init: PlayInit = {}): PlayState {
     nDistricts: init.nDistricts ?? board.rules.nDistricts,
     muniLock: init.muniLock ?? board.rules.muniLock,
     baseline: assignment,
-    frozenDrift: null,
     penalty: 0,
     powersUsed: [],
     history: [],
     selected: null,
-    seeding: false,
     cap: init.driftCap ?? board.rules.driftCap,
   };
 }
@@ -60,14 +53,13 @@ const snap = (s: PlayState): Snapshot => ({
   nDistricts: s.nDistricts,
   muniLock: s.muniLock,
   baseline: s.baseline,
-  frozenDrift: s.frozenDrift,
   penalty: s.penalty,
   powersUsed: s.powersUsed,
 });
 
-/** Public scrutiny: hexes changed since the baseline, unless the hearings were skipped. */
-export function drift(s: Pick<PlayState, "assignment" | "baseline" | "frozenDrift" | "penalty">): number {
-  return s.frozenDrift ?? tilesChanged(s.baseline, s.assignment) + s.penalty;
+/** Public scrutiny: hexes changed since the baseline, plus any card penalty. */
+export function drift(s: Pick<PlayState, "assignment" | "baseline" | "penalty">): number {
+  return tilesChanged(s.baseline, s.assignment) + s.penalty;
 }
 
 /** While limits are locked, a hex may only join a district on its own side (city / town / countryside). */
@@ -79,7 +71,7 @@ export function crossesLimit(board: Board, s: PlayState, tile: number, district:
 
 /** Would moving `tile` into `district` push public scrutiny past the cap? */
 export function overCap(s: PlayState, tile: number, district: number): boolean {
-  if (s.cap === undefined || s.frozenDrift !== null) return false;
+  if (s.cap === undefined) return false;
   const next = [...s.assignment];
   next[tile] = district;
   return tilesChanged(s.baseline, next) + s.penalty > s.cap;
@@ -97,7 +89,7 @@ export function canPlay(board: Board, s: PlayState, id: PowerId): boolean {
   if (id === "limits") {
     // Changing the boundary law is itself noticed: it can't push scrutiny over the cap.
     const cost = board.rules.limitsScrutiny ?? 0;
-    return s.muniLock && (s.cap === undefined || s.frozenDrift !== null || drift(s) + cost <= s.cap);
+    return s.muniLock && (s.cap === undefined || drift(s) + cost <= s.cap);
   }
   return true;
 }
@@ -106,20 +98,6 @@ export function playReducer(board: Board, init: PlayInit = {}) {
   return (s: PlayState, a: PlayAction): PlayState => {
     switch (a.type) {
       case "tap": {
-        if (s.seeding) {
-          if (isLastTile(s.assignment, a.tile)) return s;
-          const assignment = [...s.assignment];
-          assignment[a.tile] = s.nDistricts; // the new district starts as this one hex
-          return {
-            ...s,
-            history: [...s.history, snap(s)],
-            assignment,
-            nDistricts: s.nDistricts + 1,
-            powersUsed: [...s.powersUsed, "seat"],
-            seeding: false,
-            selected: null,
-          };
-        }
         if (s.selected === null || s.selected === a.tile) {
           return { ...s, selected: s.selected === a.tile ? null : a.tile };
         }
@@ -130,25 +108,21 @@ export function playReducer(board: Board, init: PlayInit = {}) {
         return move(s, s.selected, target);
       }
       case "select":
-        return { ...s, selected: a.tile, seeding: false };
+        return { ...s, selected: a.tile };
       case "move":
         if (a.district >= s.nDistricts || !allowedTargets(board, s, a.tile).has(a.district)) return s;
         return move(s, a.tile, a.district);
       case "power": {
         if (!canPlay(board, s, a.id)) return s;
-        if (a.id === "seat") return { ...s, seeding: true, selected: null };
         const next = { ...s, history: [...s.history, snap(s)], powersUsed: [...s.powersUsed, a.id], selected: null };
         if (a.id === "limits") return { ...next, muniLock: false, penalty: s.penalty + (board.rules.limitsScrutiny ?? 0) };
-        if (a.id === "hearings") return { ...next, frozenDrift: drift(s) };
         // toss: the current map becomes the new reference; scrutiny back to zero (and counting again)
-        return { ...next, baseline: s.assignment, frozenDrift: null, penalty: 0 };
+        return { ...next, baseline: s.assignment, penalty: 0 };
       }
-      case "cancelSeed":
-        return { ...s, seeding: false };
       case "undo": {
         if (!s.history.length) return s;
         const prev = s.history[s.history.length - 1];
-        return { ...s, ...prev, history: s.history.slice(0, -1), selected: null, seeding: false };
+        return { ...s, ...prev, history: s.history.slice(0, -1), selected: null };
       }
       case "reset":
         return initPlay(board, init);

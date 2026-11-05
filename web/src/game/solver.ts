@@ -157,7 +157,6 @@ export function hint(board: Board, goal: Goal, current: number[], ctx: HintCtx =
   if (!targets.length) {
     const known = ctx.taskId ? board.solutions?.[ctx.taskId] ?? [] : [];
     if (ctx.canPlay?.("limits") && known.some((s) => s.k === k)) return { card: "limits" };
-    if (ctx.canPlay?.("seat") && known.some((s) => s.k === k + 1)) return { card: "seat" };
     return null;
   }
   let best: number[] | null = null;

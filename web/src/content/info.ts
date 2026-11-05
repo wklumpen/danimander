@@ -20,6 +20,10 @@ const S = {
   herald: { label: "Lethbridge Herald — Apr 30, 2026", url: "https://lethbridgeherald.com/news/lethbridge-news/2026/04/30/ndp-accuses-ucp-of-gerrymandering-over-electoral-boundaries/" },
   ssceb: { label: "Select Special Committee on Electoral Boundaries — report (Nov 2026), incl. text of Motion 37", url: "https://www.assembly.ab.ca/docs/default-source/committees/ceb/ssceb-report-(original-signed).pdf?sfvrsn=e847491d_8" },
   ceo: { label: "Global News — Elections Alberta letter (Oct 31, 2026)", url: "https://globalnews.ca/news/12128904/possible-delayed-albert-election/" },
+  probe: { label: "Probe Research — Albertans' views on electoral boundaries (May 2026, n=1,484, online panel)", url: "https://probe-research.com/polls/albertans-weigh-election-boundaries" },
+  findMla: { label: "Legislative Assembly — find your MLA", url: "https://www.assembly.ab.ca/members/members-of-the-legislative-assembly" },
+  watch: { label: "Legislative Assembly — watch the Assembly", url: "https://www.assembly.ab.ca/assembly-business/watch-the-assembly" },
+  voterlink: { label: "Elections Alberta — Voterlink", url: "https://voterlink.ab.ca/" },
   cbcDenied: { label: "CBC News — Province denies Elections Alberta's request", url: "https://www.cbc.ca/news/canada/edmonton/elections-alberta-mickey-amery-9.7405056" },
 } satisfies Record<string, Source>;
 
@@ -34,8 +38,8 @@ export const info = {
   sixty: [
     { icon: "⚖️", text: "Alberta's ridings are normally drawn by an independent commission chaired by a judge.", anchor: "timeline" },
     { icon: "🗑️", text: "In April 2026 the government set the commission's final report aside — a first in Alberta's history.", anchor: "card-toss" },
-    { icon: "🏛️", text: "It gave the job to an MLA committee with a government majority, with no requirement to hold public hearings.", anchor: "card-hearings" },
-    { icon: "➕", text: "The commission drew 89 ridings; the committee's panel was told to draw 91.", anchor: "card-seat" },
+    { icon: "🏛️", text: "It gave the job to an MLA committee with a government majority, with no requirement to hold public hearings.", anchor: "timeline" },
+    { icon: "➕", text: "The commission drew 89 ridings; the committee's panel was told to draw 91.", anchor: "timeline" },
     { icon: "⏳", text: "Elections Alberta asked MLAs to keep the current map or delay the 2027 vote.", anchor: "timeline" },
   ],
 
@@ -112,9 +116,7 @@ export const info = {
 
   powersTitle: "The power cards in real life",
   powers: [
-    { id: "card-seat", card: "➕ Bonus Seat", text: "The number of ridings is set by the Legislature, not the commission: 87 → 89 by Bill 31 in 2024, then a push to 91 through Motion 37 in 2026.", sources: [S.bill31, S.ssceb] },
     { id: "card-limits", card: "🚧 Erase the City Limits", text: "Bill 31 (2024) stopped asking the commission to respect municipal boundaries where possible.", sources: [S.ctv2024, S.statute], verify: "Same as the Nov–Dec 2024 timeline item." },
-    { id: "card-hearings", card: "🔇 Skip the Hearings", text: "Motion 37 told the new committee to work 'without a requirement to direct the holding of public hearings'. The commission held dozens.", sources: [S.ssceb, S.final] },
     { id: "card-toss", card: "🗑️ Toss the Ref's Report", text: "The government set aside the independent commission's final report — reported as the first time in Alberta's history.", sources: [S.herald, S.ssceb] },
   ],
 
@@ -126,10 +128,48 @@ export const info = {
   ],
 
   actTitle: "What you can do",
+  // Lead with the poll: most Albertans — including most UCP supporters — agree (Probe AI5b, AI5c).
+  notAlone: {
+    text: "You're not alone. 68% of Albertans, including 66% of UCP supporters, say independent commissioners, not elected officials, should set the boundaries. 64% say city ridings should stay within city limits.",
+    sources: [S.probe],
+  },
   act: [
-    { text: "Find your MLA and tell them who should draw the map.", url: "https://www.assembly.ab.ca/members/members-of-the-legislative-assembly", verify: "Confirm URL." },
-    { text: "Share the game with someone who'd never read a news story about this.", url: null },
+    {
+      id: "share",
+      icon: "📤",
+      title: "Send this to two people",
+      text: "Pick someone who'd never read a news story about this. It takes them two minutes.",
+      button: "Share the game",
+    },
+    {
+      id: "mla",
+      icon: "✉️",
+      title: "Tell your MLA — 30 seconds",
+      text: "Copy this, paste it into an email to your MLA, and add your name and town:",
+      message:
+        "Hello, I'm one of your constituents. I believe Alberta's electoral map should be drawn by an independent commission, not by MLAs. Please oppose any map that didn't come from one — and tell me where you stand.",
+      button: "Copy message",
+      link: S.findMla,
+      linkLabel: "Find your MLA →",
+    },
+    {
+      id: "watch",
+      icon: "📺",
+      title: "Watch the vote",
+      text: "The new map isn't law until the Legislature passes it. The debate is streamed live.",
+      link: S.watch,
+      linkLabel: "Watch the Assembly →",
+    },
+    {
+      id: "vote",
+      icon: "🗳️",
+      title: "Make sure you can vote in 2027",
+      text: "Check or update your registration with Elections Alberta. It takes about five minutes.",
+      link: S.voterlink,
+      linkLabel: "Am I registered? →",
+    },
   ],
+  copied: "Copied!",
 
   checkedNote: (d: string) => `Sources last checked ${d}. Spotted an error? Tell us and we'll fix it.`,
   analytics: "We count visits and level completions. No cookies, no personal data, no tracking across sites.",

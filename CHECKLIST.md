@@ -11,7 +11,9 @@ Every claim has sources; all were opened and read on 2026-11-05 except where not
 ## Legal / distribution
 - [ ] Confirm with Alberta's Voice whether third-party political advertising identification ("authorized by…") is needed.
 - [ ] Register `danimander.ca` + `dani-mander.ca` (301 at registrar); grab `@danimander` handles.
-- [ ] Create the `danimander` GoatCounter site.
+- [ ] **Create the `danimander` GoatCounter site** — until then analytics requests get HTTP 400 and nothing is counted.
+- [ ] Send the Alberta's Voice signup/campaign URL for the "What you can do" section.
+- [ ] Poll figures (Probe Research, May 2026, online panel — no margin of error) are quoted from the report's charts: 68% / 66% UCP (AI5b), 64% (AI5c). Re-check if a newer poll lands.
 - [ ] GitHub repo → Settings → Pages → Source: GitHub Actions; set custom domain + enforce HTTPS.
 
 ## QA

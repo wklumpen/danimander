@@ -1,6 +1,8 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { track } from "../analytics";
 import { checked, info, type Source } from "../content/info";
+import { share } from "../content/share";
+import { copyText, shareOrCopy } from "../game/shareText";
 
 function Sources({ sources }: { sources: Source[] }) {
   return (
@@ -15,6 +17,7 @@ function Sources({ sources }: { sources: Source[] }) {
 }
 
 export function Info({ onBack }: { onBack: () => void }) {
+  const [done, setDone] = useState<string | null>(null);
   useEffect(() => {
     track("info-view");
     window.scrollTo(0, 0);
@@ -65,12 +68,51 @@ export function Info({ onBack }: { onBack: () => void }) {
         ))}
       </ul>
 
-      <h2>{info.actTitle}</h2>
-      <ul>
+      <h2 id="act">{info.actTitle}</h2>
+      <p className="not-alone">
+        {info.notAlone.text} <Sources sources={info.notAlone.sources} />
+      </p>
+      <div className="act">
         {info.act.map((a) => (
-          <li key={a.text}>{a.url ? <a href={a.url} target="_blank" rel="noopener noreferrer">{a.text}</a> : a.text}</li>
+          <section key={a.id} className="act-card">
+            <h3>
+              <span aria-hidden>{a.icon}</span> {a.title}
+            </h3>
+            <p>{a.text}</p>
+            {"message" in a && a.message && <blockquote className="mla-message">{a.message}</blockquote>}
+            <div className="act-actions">
+              {a.id === "share" && (
+                <button
+                  className="primary"
+                  onClick={async () => {
+                    const r = await shareOrCopy(`${share.text.replace(/\s*danimander\.ca\s*$/, "")} ${location.origin}${location.pathname}`);
+                    if (r === "shared" || r === "copied") track(`act-share-${r}`);
+                    if (r === "copied") setDone("share");
+                  }}
+                >
+                  {done === "share" ? info.copied : a.button}
+                </button>
+              )}
+              {"message" in a && a.message && (
+                <button
+                  className="primary"
+                  onClick={async () => {
+                    if (await copyText(a.message!)) setDone(a.id);
+                    track("act-mla-copy");
+                  }}
+                >
+                  {done === a.id ? info.copied : a.button}
+                </button>
+              )}
+              {"link" in a && a.link && (
+                <a href={a.link.url} target="_blank" rel="noopener noreferrer" onClick={() => track(`act-${a.id}`)}>
+                  {a.linkLabel}
+                </a>
+              )}
+            </div>
+          </section>
         ))}
-      </ul>
+      </div>
 
       <p className="muted small">{info.checkedNote(checked)}</p>
       <p className="muted small">{info.analytics}</p>

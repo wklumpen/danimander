@@ -220,3 +220,12 @@ main.fit { padding-left: 8px; padding-right: 8px; }
 .daily-head .daily-tag { display: block; font-size: 0.78rem; }
 .daily-btn { border-width: 2px; background: #fff; box-shadow: 0 2px 0 var(--ink); }
 .daily-btn .daily-brand { font-size: 1.05rem; }
+
+.not-alone { font-weight: 700; font-size: 1.05rem; background: #fff; border-left: 4px solid var(--ink); padding: 10px 12px; border-radius: 6px; }
+.act { display: grid; gap: 10px; }
+.act-card { background: #fff; border: 1.5px solid var(--ink); border-radius: 12px; padding: 10px 14px; }
+.act-card h3 { margin: 4px 0; font-size: 1.05rem; }
+.act-card p { margin: 4px 0 8px; }
+.mla-message { margin: 6px 0 10px; padding: 8px 10px; background: var(--paper); border-left: 3px solid var(--muted); font-style: italic; }
+.act-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.act-actions a { font-weight: 700; }

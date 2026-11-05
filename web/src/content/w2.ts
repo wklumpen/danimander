@@ -1,14 +1,11 @@
 // Copy for World 2 ("Prairie Province") and the power-card HUD.
 export const w2 = {
   scrutiny: "Scrutiny",
-  frozen: "hearings skipped",
   tooObvious: (cap: number) => `Too obvious — scrutiny is over ${cap}. The public would notice.`,
   mixed: "Limits are locked: districts can't mix 🌾 country, 🏙️ city and 🏘️ town.",
   capBlocked: "Too obvious — the public would notice. Toss the report?",
   lockBlocked: "Limits are locked: hexes can only join districts of the same land (🌾 🏙️ 🏘️).",
   noRoom: "Scrutiny's maxed out. Undo a few moves and plan your toss.",
-  seeding: "Tap a hex to start your new district.",
-  cancel: "Cancel",
   start: "Start drawing ✏️",
   reveal: {
     headline: "Neither side should be able to do this.",

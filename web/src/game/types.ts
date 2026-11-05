@@ -24,7 +24,7 @@ export function seatsNeeded(goal: Goal, nDistricts: number): number {
   return goal.minSeatsByK?.[String(nDistricts)] ?? goal.minSeats;
 }
 
-export type PowerId = "seat" | "limits" | "hearings" | "toss";
+export type PowerId = "limits" | "toss";
 
 export type Task = {
   id: string;

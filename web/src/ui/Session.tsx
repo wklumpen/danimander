@@ -141,9 +141,8 @@ export function Session({ board, task, init, onWin, winActions }: Props) {
     setHintDistrict(h.district);
   };
 
-  const instruction = play.seeding
-    ? w2.seeding
-    : play.selected === null
+  const instruction =
+    play.selected === null
       ? copy.hud.pickTile
       : lastHex
         ? copy.hud.lastHex
@@ -159,16 +158,13 @@ export function Session({ board, task, init, onWin, winActions }: Props) {
     <>
       <header>
         <h1 className="prompt"><PartyText text={task.prompt} board={board} /></h1>
-        {quip && !result && play.selected === null && !play.seeding ? (
+        {quip && !result && play.selected === null ? (
           <p key={quip.n} className="hint quip-line" aria-hidden onAnimationEnd={() => setQuip(null)}>
             <svg viewBox="0 0 24 24" aria-hidden><use href="#ic-salamander" /></svg> {quip.text}
           </p>
         ) : (
-          <p className={lastHex || play.seeding || capBlocked || lockBlocked ? "hint warn-soft" : "hint"}>
+          <p className={lastHex || capBlocked || lockBlocked ? "hint warn-soft" : "hint"}>
             {instruction}
-            {play.seeding && (
-              <button className="link inline" onClick={() => dispatch({ type: "cancelSeed" })}> {w2.cancel}</button>
-            )}
           </p>
         )}
       </header>
@@ -205,7 +201,7 @@ export function Session({ board, task, init, onWin, winActions }: Props) {
           onPlay={(id) => {
             clearTransient();
             dispatch({ type: "power", id });
-            if (id !== "seat") say(powers[id].quip);
+            say(powers[id].quip);
           }}
         />
       )}
@@ -216,7 +212,7 @@ export function Session({ board, task, init, onWin, winActions }: Props) {
         startSeats={startSeats}
         share={share}
         changed={tilesChanged(board.start, play.assignment)}
-        scrutiny={cap !== undefined ? { value: scrutiny, cap, frozen: play.frozenDrift !== null } : undefined}
+        scrutiny={cap !== undefined ? { value: scrutiny, cap } : undefined}
         nInvalid={invalid.size}
         blocked={tooObvious}
         ghost={ghost}
