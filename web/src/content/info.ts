@@ -100,8 +100,9 @@ export const info = {
       sources: [S.ablawg],
     },
     {
-      text: "The commission's majority called the minority's map 'unconstitutional' and warned it would 'invite a court to write the next chapter'.",
-      sources: [S.ablawg, S.final],
+      // Final report, s. XI Conclusion (majority), pp. 63–64; Calgary map: p. 22.
+      text: "The commission's majority objected \"in the strongest terms to this unconstitutional minority report\" and warned that \"accepting the minority report would certainly invite a court to write the next chapter.\" It called the minority's Calgary map \"quite likely unconstitutional.\"",
+      sources: [S.final],
     },
     {
       text: "The commission itself said it could have used more seats: had it been allowed, it 'may very well have proposed a map of at least 91 electoral divisions'.",
