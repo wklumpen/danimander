@@ -19,7 +19,7 @@ header { text-align: center; }
 .prompt { font-size: 1.35rem; margin: 4px 0 0; }
 .hint { margin: 2px 0 0; color: var(--muted); font-size: 0.9rem; }
 
-.board { width: 100%; height: auto; max-height: 60dvh; touch-action: manipulation; user-select: none; }
+.board { width: 100%; height: auto; max-height: 58dvh; touch-action: none; user-select: none; -webkit-user-select: none; outline: none; }
 .board.mini { max-height: none; }
 .tile { cursor: pointer; }
 .tile polygon { transition: fill 0.25s, transform 0.2s; transform-box: fill-box; transform-origin: center; }
@@ -30,7 +30,6 @@ header { text-align: center; }
 .fill-tie { fill: #888; }
 .tile.target polygon:first-child { filter: brightness(1.12); stroke: var(--select); stroke-width: 0.06; }
 .tile.selected polygon:first-child { stroke: var(--select); stroke-width: 0.16; transform: scale(0.9); }
-.icon { font-size: 0.75px; text-anchor: middle; dominant-baseline: middle; }
 .glyph { font-size: 0.32px; text-anchor: middle; fill: rgba(0, 0, 0, 0.45); }
 .border { stroke: var(--ink); stroke-width: 0.12; }
 .border.bad { stroke: var(--invalid); stroke-width: 0.16; }
@@ -65,3 +64,44 @@ button.primary { background: var(--ink); color: #fff; font-weight: 700; }
 .reveal figcaption { font-size: 0.8rem; }
 .reveal figcaption b { font-size: 1.2rem; }
 .reveal .core { font-weight: 700; font-size: 1.1rem; }
+
+.board:focus-visible .tile.focus polygon:first-child { stroke: #0070f3; stroke-width: 0.12; }
+.badge { animation: pop 0.35s ease-out; transform-box: fill-box; }
+.small { font-size: 0.8rem; }
+
+.topnav { display: flex; justify-content: space-between; align-items: center; }
+.icon-btn { min-width: 44px; padding: 0; font-size: 1.3rem; border: none; background: none; }
+.mascot { width: 40px; height: 40px; }
+footer { margin-top: auto; padding-top: 16px; text-align: center; font-size: 0.8rem; color: var(--muted); }
+footer a { color: var(--ink); font-weight: 600; font-size: 0.95rem; }
+a { color: var(--purple); }
+button.link { border: none; background: none; padding: 0; min-height: 44px; color: var(--purple); text-align: left; }
+
+.overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); display: flex; align-items: flex-end; justify-content: center; z-index: 10; }
+.sheet { background: var(--paper); width: 100%; max-width: 480px; border-radius: 18px 18px 0 0; padding: 16px; animation: pop 0.2s ease-out; }
+.sheet ol { list-style: none; padding: 0; display: grid; gap: 6px; }
+.sheet ol button { width: 100%; text-align: left; display: flex; justify-content: space-between; }
+.sheet .locked { opacity: 0.5; }
+.stars-sm { color: var(--select); }
+
+.confetti { position: fixed; inset: 0; pointer-events: none; overflow: hidden; z-index: 5; }
+.confetti i { position: absolute; top: -10px; width: 8px; height: 14px; border-radius: 2px; animation: fall 1.4s ease-in forwards; }
+@keyframes fall { to { transform: translate(var(--dx), 105vh) rotate(540deg); opacity: 0.8; } }
+@media (prefers-reduced-motion: reduce) { .confetti, .badge, .result, .sheet { animation: none !important; } .confetti { display: none; } }
+
+.share { display: grid; gap: 8px; margin: 8px 0 16px; }
+.share .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.card-preview { width: 100%; border-radius: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.15); }
+
+.info { line-height: 1.5; }
+.info h1 { font-size: 1.6rem; margin: 4px 0; }
+.info h2 { margin-top: 28px; font-size: 1.2rem; }
+.info .sixty { list-style: none; padding: 0; display: grid; gap: 10px; }
+.info .sixty li { display: flex; gap: 10px; align-items: flex-start; }
+.info .sixty .ic { font-size: 1.4rem; }
+.info .sixty a { color: var(--ink); text-decoration: none; border-bottom: 1px dotted var(--muted); }
+.info .timeline { padding-left: 1.1em; display: grid; gap: 10px; }
+.sources a { font-size: 0.75rem; margin-left: 2px; text-decoration: none; vertical-align: super; }
+.og { width: 1200px; height: 630px; }
+body:has(.og) { margin: 0; overflow: hidden; }
+.info-i { display: inline-grid; place-items: center; width: 28px; height: 28px; border: 2px solid var(--ink); border-radius: 50%; font: 700 16px/1 Georgia, serif; font-style: italic; }

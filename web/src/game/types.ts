@@ -36,6 +36,7 @@ export type Board = {
     seatDist: Record<PartyId, Record<string, number>>;
     goalShare?: Record<string, number>;
   };
+  examples?: Record<string, number[]>;
 };
 
 export type PlanState = {

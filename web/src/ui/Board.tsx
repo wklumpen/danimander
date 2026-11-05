@@ -1,11 +1,16 @@
-import { useMemo } from "react";
+import { useMemo, useRef, useState } from "react";
 import { districtVotes } from "../game/score";
 import type { Board as BoardT } from "../game/types";
 import { center, edges, hexPoints, viewBox } from "./hex";
 
-const ICONS: Record<string, string> = { town: "🏘️", farm: "🌾", pumpjack: "🛢️", mountain: "🏔️" };
 // Shape backup for colour (SPEC accessibility): ▲ first party, ● second.
 const GLYPHS = ["▲", "●"];
+const ARROWS: Record<string, [number, number]> = {
+  ArrowRight: [1, 0],
+  ArrowLeft: [-1, 0],
+  ArrowUp: [0, -1],
+  ArrowDown: [0, 1],
+};
 
 type Props = {
   board: BoardT;
@@ -16,14 +21,19 @@ type Props = {
   invalid?: Set<number>;
   ghost?: boolean;
   onTap?: (tile: number) => void;
+  onAssign?: (tile: number, district: number) => void;
   mini?: boolean;
   label?: string;
 };
 
-export function Board({ board, assignment, nDistricts, selected = null, targets, invalid, ghost, onTap, mini, label }: Props) {
+export function Board(props: Props) {
+  const { board, assignment, nDistricts, selected = null, targets, invalid, ghost, onTap, onAssign, mini, label } = props;
   const allEdges = useMemo(() => edges(board.tiles), [board]);
   const vb = useMemo(() => viewBox(board.tiles), [board]);
   const parties = board.parties.map((p) => p.id);
+  const [focus, setFocus] = useState(0);
+  const down = useRef<{ tile: number; deferDeselect: boolean } | null>(null);
+  const interactive = !!onTap;
 
   const totals = districtVotes(board, assignment, nDistricts);
   const badges = Array.from({ length: nDistricts }, (_, d) => {
@@ -36,8 +46,66 @@ export function Board({ board, assignment, nDistricts, selected = null, targets,
     return { d, x, y, a, b, leader };
   });
 
+  // Pointer: tap-tap and drag share one path. Down selects; up over a different tile moves.
+  const tileAt = (e: React.PointerEvent) => {
+    const el = document.elementFromPoint(e.clientX, e.clientY)?.closest("[data-tile]");
+    return el ? Number(el.getAttribute("data-tile")) : null;
+  };
+  const onDown = (i: number) => (e: React.PointerEvent) => {
+    if (!onTap) return;
+    (e.currentTarget as Element).releasePointerCapture?.(e.pointerId);
+    setFocus(i);
+    if (selected === i) down.current = { tile: i, deferDeselect: true };
+    else {
+      down.current = { tile: i, deferDeselect: false };
+      onTap(i);
+    }
+  };
+  const onUp = (e: React.PointerEvent) => {
+    const d = down.current;
+    down.current = null;
+    if (!d || !onTap) return;
+    const j = tileAt(e);
+    if (j === null) return;
+    if (j !== d.tile) onTap(j);
+    else if (d.deferDeselect) onTap(j);
+  };
+
+  const onKey = (e: React.KeyboardEvent) => {
+    if (!onTap) return;
+    const dir = ARROWS[e.key];
+    if (dir) {
+      e.preventDefault();
+      const [fx, fy] = center(board.tiles[focus]);
+      let best = focus;
+      let bestScore = -Infinity;
+      for (const n of board.adjacency[focus]) {
+        const [nx, ny] = center(board.tiles[n]);
+        const len = Math.hypot(nx - fx, ny - fy);
+        const score = ((nx - fx) * dir[0] + (ny - fy) * dir[1]) / len;
+        if (score > 0.3 && score > bestScore) [best, bestScore] = [n, score];
+      }
+      setFocus(best);
+    } else if (e.key === "Enter" || e.key === " ") {
+      e.preventDefault();
+      onTap(focus);
+    } else if (/^[1-9]$/.test(e.key) && onAssign) {
+      onAssign(selected ?? focus, Number(e.key) - 1);
+    } else if (e.key === "Escape" && selected !== null) {
+      onTap(selected);
+    }
+  };
+
   return (
-    <svg className={mini ? "board mini" : "board"} viewBox={vb} role="img" aria-label={label ?? board.title}>
+    <svg
+      className={mini ? "board mini" : "board"}
+      viewBox={vb}
+      role={interactive ? "application" : "img"}
+      aria-label={label ?? board.title}
+      tabIndex={interactive ? 0 : undefined}
+      onKeyDown={interactive ? onKey : undefined}
+      onPointerUp={interactive ? onUp : undefined}
+    >
       <defs>
         <pattern id="hatch" width="0.3" height="0.3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
           <line x1="0" y1="0" x2="0" y2="0.3" stroke="var(--invalid)" strokeWidth="0.08" />
@@ -49,20 +117,21 @@ export function Board({ board, assignment, nDistricts, selected = null, targets,
         const d = assignment[i];
         const isTarget = selected !== null && targets?.has(d);
         const [cx, cy] = center(t);
+        const cls = ["tile", isTarget && "target", selected === i && "selected", interactive && focus === i && "focus"];
         return (
           <g
             key={t.id}
-            className={`tile ${isTarget ? "target" : ""} ${selected === i ? "selected" : ""}`}
-            onClick={onTap ? () => onTap(i) : undefined}
-            role={onTap ? "button" : undefined}
-            aria-label={onTap ? `${board.parties[pi].label} ${t.icon}, district ${d + 1}` : undefined}
+            data-tile={i}
+            className={cls.filter(Boolean).join(" ")}
+            onPointerDown={interactive ? onDown(i) : undefined}
+            aria-label={interactive ? `${board.parties[pi].label} ${t.icon}, district ${d + 1}` : undefined}
           >
             <polygon points={hexPoints(t, 0.96)} className={`fill-${party}`} />
             {invalid?.has(d) && <polygon points={hexPoints(t, 0.96)} fill="url(#hatch)" pointerEvents="none" />}
             {!mini && (
               <>
-                <text x={cx} y={cy - 0.1} className="icon" pointerEvents="none">{ICONS[t.icon] ?? ""}</text>
-                <text x={cx} y={cy + 0.55} className="glyph" pointerEvents="none">{GLYPHS[pi]}</text>
+                <use href={`#ic-${t.icon}`} x={cx - 0.42} y={cy - 0.62} width={0.84} height={0.84} pointerEvents="none" />
+                <text x={cx} y={cy + 0.58} className="glyph" pointerEvents="none">{GLYPHS[pi]}</text>
               </>
             )}
           </g>
@@ -81,7 +150,8 @@ export function Board({ board, assignment, nDistricts, selected = null, targets,
       {badges.map(
         (b) =>
           b && (
-            <g key={b.d} className="badge" pointerEvents="none">
+            // Keyed on leader so a flip remounts the badge and replays the pop animation.
+            <g key={`${b.d}-${b.leader}`} className="badge" pointerEvents="none" style={{ transformOrigin: `${b.x}px ${b.y}px` }}>
               <circle cx={b.x} cy={b.y} r={mini ? 0.7 : 0.42} className={b.leader ? `fill-${b.leader} strong` : "fill-tie"} />
               {!mini && (
                 <text x={b.x} y={b.y + 0.13}>

@@ -151,6 +151,18 @@ def search(seed: int, n_samples: int, n_starts: int):
     return tiles, adj, plans, membership, uniq
 
 
+def relabel_to(start, plan) -> list[int]:
+    """Relabel plan's districts to best match start (so unchanged districts keep their ids)."""
+    from scipy.optimize import linear_sum_assignment
+
+    m = np.zeros((N_DISTRICTS, N_DISTRICTS))
+    for a, b in zip(start, plan):
+        m[a, b] += 1
+    r, c = linear_sum_assignment(-m)
+    to_start = {int(cc): int(rr) for rr, cc in zip(r, c)}
+    return [to_start[int(b)] for b in plan]
+
+
 def build_board(tiles, adj, plans, membership, cand):
     n = len(tiles)
     votes = np.zeros((n, 2), dtype=np.float32)
@@ -164,6 +176,13 @@ def build_board(tiles, adj, plans, membership, cand):
         return {str(int(v)): round(float(c) / len(plans), 4) for v, c in zip(vals, counts)}
 
     start = plans[cand["start"]].tolist()
+    # Closest goal-satisfying plan per task (used for the OG image and as a hint/answer key).
+    changed = solver.tiles_changed(membership, np.array(start), N_DISTRICTS)
+    green = seat_counts[:, GREEN]
+    examples = {}
+    for tid, ok in (("t1", green >= 3), ("t2", green == 0)):
+        idx = np.flatnonzero(ok)
+        examples[tid] = relabel_to(start, plans[idx[np.argmin(changed[idx])]])
     return {
         "id": "w1",
         "title": "Coulee County",
@@ -213,6 +232,7 @@ def build_board(tiles, adj, plans, membership, cand):
             "seatDist": {"purple": dist(PURPLE), "green": dist(GREEN)},
             "goalShare": {"t1": round(cand["share1"], 4), "t2": round(cand["share2"], 4)},
         },
+        "examples": examples,
     }
 
 

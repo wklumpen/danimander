@@ -31,3 +31,14 @@ npm run build
 ```
 
 Pushes to `main` deploy to GitHub Pages (`.github/workflows/deploy.yml`).
+
+### Other scripts
+
+```sh
+npm run check-links   # every source URL in src/content responds (403s = bot-blocked, check by hand)
+npm run og            # with `vite preview` running: re-render public/og.png from the ?og route
+```
+
+## Pre-launch checklist
+
+See [CHECKLIST.md](CHECKLIST.md).

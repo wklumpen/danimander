@@ -28,5 +28,18 @@ export const w1 = {
       `Of ${nPlans.toLocaleString("en-CA")} possible maps, only ${pct} give Green 3 seats — you found one.`,
     core: "Same votes, different map, different winner — that's why the people who win elections shouldn't draw the map.",
     again: "Play again",
+    shareTitle: "Show someone what you did",
   },
+  menu: {
+    title: "Levels",
+    worlds: [
+      { id: "w1", title: "1 · Coulee County", available: true },
+      { id: "w2", title: "2 · Prairie Province", available: false },
+      { id: "w3", title: "3 · The Real Thing", available: false },
+    ],
+    soon: "Coming soon",
+    reveal: "The reveal",
+    close: "Close",
+  },
+  nav: { menu: "Levels", info: "What's happening in Alberta?" },
 };
