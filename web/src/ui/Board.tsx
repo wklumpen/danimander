@@ -111,7 +111,7 @@ export function Board(props: Props) {
     >
       <defs>
         <pattern id="hatch" width="0.3" height="0.3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-          <line x1="0" y1="0" x2="0" y2="0.3" stroke="var(--invalid)" strokeWidth="0.08" />
+          <line x1="0" y1="0" x2="0" y2="0.3" stroke="var(--invalid)" strokeWidth="0.05" strokeOpacity="0.45" />
         </pattern>
       </defs>
       {board.tiles.map((t, i) => {

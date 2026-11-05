@@ -13,6 +13,7 @@ export const w1 = {
     invalid: (n: number) => (n === 1 ? "1 district needs fixing" : `${n} districts need fixing`),
     pickTile: "Tap a hex to pick it up.",
     pickTarget: "Tap a yellow district to move this hex into it.",
+    lastHex: "That's the last hex in its district — districts can't disappear.",
     hint: "Hint",
     noHint: "Already there — run the election!",
     hintsUsed: (n: number) => `${n} hint${n > 1 ? "s" : ""} used (max ★★)`,

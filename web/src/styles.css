@@ -39,7 +39,7 @@ header { text-align: center; }
 @keyframes march { to { stroke-dashoffset: -0.74; } }
 .glyph { font-size: 0.32px; text-anchor: middle; fill: rgba(0, 0, 0, 0.45); }
 .border { stroke: var(--ink); stroke-width: 0.12; }
-.border.bad { stroke: var(--invalid); stroke-width: 0.16; }
+.border.bad { stroke: var(--invalid); stroke-width: 0.1; stroke-opacity: 0.7; }
 .ghost { stroke: var(--ink); stroke-width: 0.06; stroke-dasharray: 0.15 0.12; opacity: 0.6; pointer-events: none; }
 .badge text { font-size: 0.32px; font-weight: 700; fill: #fff; text-anchor: middle; }
 .badge circle { stroke: #fff; stroke-width: 0.05; }
@@ -121,3 +121,4 @@ body:has(.og) { margin: 0; overflow: hidden; }
 .hint-note { color: var(--muted); font-size: 0.8rem; }
 @media (prefers-reduced-motion: reduce) { .wash.hinted, .lifted { animation: none; } }
 .daily-tag { text-align: center; margin: 0; font-weight: 700; color: var(--purple); }
+.warn-soft { color: var(--invalid); }

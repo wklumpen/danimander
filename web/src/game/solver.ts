@@ -4,6 +4,7 @@
  */
 import { matchDistricts, tilesChanged } from "./drift";
 import type { Board, Goal } from "./types";
+import { moveTargets } from "./validate";
 
 /** All partitions into n connected districts of size in [lo, hi], canonical labels. */
 export function enumeratePlans(adj: number[][], n: number, lo: number, hi: number): Int8Array[] {
@@ -155,7 +156,7 @@ export function hint(board: Board, goal: Goal, current: number[]): Hint | null {
   current.forEach((d, i) => {
     const want = match[best![i]];
     if (want === d) return;
-    if (!board.adjacency[i].some((j) => current[j] === want)) return;
+    if (!moveTargets(board, current, i).has(want)) return;
     const score = (size[d] - quota) + (quota - size[want]) - i * 1e-3; // deterministic tiebreak
     if (score > pickScore) [pick, pickScore] = [{ tile: i, district: want, remaining: bestD }, score];
   });

@@ -48,9 +48,19 @@ export function validatePlan(board: Board, assignment: number[], nDistricts = bo
   return problems;
 }
 
-/** Districts the tile may move into: any other district with a tile adjacent to it. */
+/** True if `tile` is the only tile left in its district (moving it would delete the district). */
+export function isLastTile(assignment: number[], tile: number): boolean {
+  const d = assignment[tile];
+  return assignment.every((a, i) => i === tile || a !== d);
+}
+
+/**
+ * Districts the tile may move into: any other district with a tile adjacent to it.
+ * A district's last tile can't move — districts never disappear (only power cards change the count).
+ */
 export function moveTargets(board: Board, assignment: number[], tile: number): Set<number> {
   const out = new Set<number>();
+  if (isLastTile(assignment, tile)) return out;
   for (const n of board.adjacency[tile]) if (assignment[n] !== assignment[tile]) out.add(assignment[n]);
   return out;
 }

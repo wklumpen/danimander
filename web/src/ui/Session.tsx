@@ -5,7 +5,7 @@ import { initPlay, playReducer, runElection } from "../game/play";
 import { seatTally, voteShare, winners } from "../game/score";
 import { hint } from "../game/solver";
 import type { Board as BoardT, Task } from "../game/types";
-import { moveTargets, validatePlan } from "../game/validate";
+import { isLastTile, moveTargets, validatePlan } from "../game/validate";
 import { Board } from "./Board";
 import { Confetti } from "./Confetti";
 import { Hud } from "./Hud";
@@ -47,6 +47,7 @@ export function Session({ board, task, onWin, winActions }: Props) {
   const startSeats = useMemo(() => seatTally(board, winners(board, board.start, k)), [board]);
   const share = useMemo(() => voteShare(board), [board]);
   const targets = play.selected === null ? undefined : moveTargets(board, play.assignment, play.selected);
+  const lastHex = play.selected !== null && isLastTile(play.assignment, play.selected);
   const goalParty = board.parties.find((p) => p.id === task.goal!.party)!;
 
   const clearTransient = () => {
@@ -83,7 +84,9 @@ export function Session({ board, task, onWin, winActions }: Props) {
     <>
       <header>
         <h1 className="prompt">{task.prompt}</h1>
-        <p className="hint">{play.selected === null ? copy.hud.pickTile : copy.hud.pickTarget}</p>
+        <p className={lastHex ? "hint warn-soft" : "hint"}>
+          {play.selected === null ? copy.hud.pickTile : lastHex ? copy.hud.lastHex : copy.hud.pickTarget}
+        </p>
       </header>
       <Board
         board={board}
