@@ -64,9 +64,6 @@ export function Info({ onBack }: { onBack: () => void }) {
           <li key={b}>{b}</li>
         ))}
       </ul>
-      <p>
-        <a href={info.repo.url} target="_blank" rel="noopener noreferrer">{info.repo.label}</a>
-      </p>
 
       <h2>{info.actTitle}</h2>
       <ul>

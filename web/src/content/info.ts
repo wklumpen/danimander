@@ -124,7 +124,6 @@ export const info = {
     "Districts win by most votes. Vote totals never change in the game — only lines.",
     "'Tiles moved' compares your map to the original after matching districts up, so renaming a district doesn't count as a change.",
   ],
-  repo: { label: "Source code and data", url: "https://github.com/wklumpen/danimander" },
 
   actTitle: "What you can do",
   act: [
