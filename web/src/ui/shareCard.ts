@@ -10,6 +10,8 @@ const FONT = `system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sa
 const COLORS: Record<string, [string, string]> = {
   blue: ["#a3b4ce", "#184484"],
   orange: ["#ffc799", "#ff7300"],
+  purple: ["#c2a5cf", "#762a83"],
+  green: ["#a6dba0", "#1b7837"],
 };
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");

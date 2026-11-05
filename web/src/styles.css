@@ -4,6 +4,11 @@
   --orange: #ff7300;
   --orange-light: #ffc799;
   --orange-ink: #b34f00; /* orange text that passes contrast on --paper */
+  /* World 1 + daily: neutral parties (Blue/Orange only arrive with Government/Opposition) */
+  --purple: #762a83;
+  --purple-light: #c2a5cf;
+  --green: #1b7837;
+  --green-light: #a6dba0;
   --ink: #1d1b22;
   --paper: #fbf7ef;
   --muted: #6b6672;
@@ -193,3 +198,14 @@ button.link.inline { min-height: 0; padding: 0 0 0 6px; font-size: inherit; }
 .seatbar.stacked .seat-label b { font-size: 1.05rem; }
 .seatbar.stacked .seat-row { order: 3; flex: 0 0 auto; margin: 4px auto 3px; }
 main.fit { padding-left: 8px; padding-right: 8px; }
+
+.fill-purple { fill: var(--purple-light); }
+.fill-green { fill: var(--green-light); }
+.fill-purple.strong { fill: var(--purple); }
+.fill-green.strong { fill: var(--green); }
+.text-purple { color: var(--purple); }
+.text-green { color: var(--green); }
+.bg-purple { background: var(--purple); }
+.bg-green { background: var(--green); }
+.border-purple { border-color: var(--purple) !important; }
+.border-green { border-color: var(--green) !important; }

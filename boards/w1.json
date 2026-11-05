@@ -3,12 +3,12 @@
  "title": "Coulee County",
  "parties": [
   {
-   "id": "blue",
-   "label": "Blue"
+   "id": "purple",
+   "label": "Purple"
   },
   {
-   "id": "orange",
-   "label": "Orange"
+   "id": "green",
+   "label": "Green"
   }
  ],
  "tiles": [
@@ -19,8 +19,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 0,
-    "orange": 1
+    "purple": 0,
+    "green": 1
    },
    "muni": null,
    "icon": "farm",
@@ -33,8 +33,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 1,
-    "orange": 0
+    "purple": 1,
+    "green": 0
    },
    "muni": null,
    "icon": "farm",
@@ -47,8 +47,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 1,
-    "orange": 0
+    "purple": 1,
+    "green": 0
    },
    "muni": null,
    "icon": "farm",
@@ -61,8 +61,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 0,
-    "orange": 1
+    "purple": 0,
+    "green": 1
    },
    "muni": null,
    "icon": "farm",
@@ -75,8 +75,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 1,
-    "orange": 0
+    "purple": 1,
+    "green": 0
    },
    "muni": null,
    "icon": "pumpjack",
@@ -89,8 +89,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 1,
-    "orange": 0
+    "purple": 1,
+    "green": 0
    },
    "muni": null,
    "icon": "farm",
@@ -103,8 +103,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 1,
-    "orange": 0
+    "purple": 1,
+    "green": 0
    },
    "muni": null,
    "icon": "farm",
@@ -117,8 +117,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 1,
-    "orange": 0
+    "purple": 1,
+    "green": 0
    },
    "muni": null,
    "icon": "town",
@@ -131,8 +131,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 1,
-    "orange": 0
+    "purple": 1,
+    "green": 0
    },
    "muni": null,
    "icon": "farm",
@@ -145,8 +145,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 1,
-    "orange": 0
+    "purple": 1,
+    "green": 0
    },
    "muni": null,
    "icon": "pumpjack",
@@ -159,8 +159,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 0,
-    "orange": 1
+    "purple": 0,
+    "green": 1
    },
    "muni": null,
    "icon": "mountain",
@@ -173,8 +173,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 0,
-    "orange": 1
+    "purple": 0,
+    "green": 1
    },
    "muni": null,
    "icon": "farm",
@@ -187,8 +187,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 1,
-    "orange": 0
+    "purple": 1,
+    "green": 0
    },
    "muni": null,
    "icon": "town",
@@ -201,8 +201,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 1,
-    "orange": 0
+    "purple": 1,
+    "green": 0
    },
    "muni": null,
    "icon": "town",
@@ -215,8 +215,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 0,
-    "orange": 1
+    "purple": 0,
+    "green": 1
    },
    "muni": null,
    "icon": "farm",
@@ -229,8 +229,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 0,
-    "orange": 1
+    "purple": 0,
+    "green": 1
    },
    "muni": null,
    "icon": "mountain",
@@ -243,8 +243,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 1,
-    "orange": 0
+    "purple": 1,
+    "green": 0
    },
    "muni": null,
    "icon": "farm",
@@ -257,8 +257,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 1,
-    "orange": 0
+    "purple": 1,
+    "green": 0
    },
    "muni": null,
    "icon": "farm",
@@ -271,8 +271,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 1,
-    "orange": 0
+    "purple": 1,
+    "green": 0
    },
    "muni": null,
    "icon": "pumpjack",
@@ -285,8 +285,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 1,
-    "orange": 0
+    "purple": 1,
+    "green": 0
    },
    "muni": null,
    "icon": "mountain",
@@ -299,8 +299,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 0,
-    "orange": 1
+    "purple": 0,
+    "green": 1
    },
    "muni": null,
    "icon": "farm",
@@ -313,8 +313,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 1,
-    "orange": 0
+    "purple": 1,
+    "green": 0
    },
    "muni": null,
    "icon": "farm",
@@ -327,8 +327,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 0,
-    "orange": 1
+    "purple": 0,
+    "green": 1
    },
    "muni": null,
    "icon": "mountain",
@@ -341,8 +341,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 0,
-    "orange": 1
+    "purple": 0,
+    "green": 1
    },
    "muni": null,
    "icon": "farm",
@@ -355,8 +355,8 @@
    "tier": 1,
    "pop": 1,
    "votes": {
-    "blue": 0,
-    "orange": 1
+    "purple": 0,
+    "green": 1
    },
    "muni": null,
    "icon": "farm",
@@ -561,9 +561,9 @@
  "tasks": [
   {
    "id": "t1",
-   "prompt": "Help Orange win 3 seats.",
+   "prompt": "Help Green win 3 seats.",
    "goal": {
-    "party": "orange",
+    "party": "green",
     "minSeats": 3,
     "swings": [
      0
@@ -574,9 +574,9 @@
   },
   {
    "id": "t2",
-   "prompt": "Now give Blue all 5.",
+   "prompt": "Now give Purple all 5.",
    "goal": {
-    "party": "blue",
+    "party": "purple",
     "minSeats": 5,
     "swings": [
      0
@@ -596,13 +596,13 @@
  "stats": {
   "nPlans": 6747,
   "seatDist": {
-   "blue": {
+   "purple": {
     "2": 0.0113,
     "3": 0.6621,
     "4": 0.324,
     "5": 0.0027
    },
-   "orange": {
+   "green": {
     "0": 0.0027,
     "1": 0.324,
     "2": 0.6621,

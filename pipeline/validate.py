@@ -13,7 +13,6 @@ from pathlib import Path
 
 import numpy as np
 
-import search
 import solver
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -31,34 +30,46 @@ def seats_needed(goal: dict, k: int) -> int:
     return goal.get("minSeatsByK", {}).get(str(k), goal["minSeats"])
 
 
+def plan_seats(plan: list[int], k: int, votes: np.ndarray) -> np.ndarray:
+    return solver.seats(solver.one_hot(np.array([plan]), k), votes)[0]
+
+
 def check_solutions(board: dict) -> list[str]:
-    """Boards too big to enumerate ship known solutions: each must be valid and meet its goal."""
+    """Boards too big to enumerate in CI ship known solutions: each must be valid and meet its goal."""
     errs = []
     tiles, adj, rules = board["tiles"], board["adjacency"], board["rules"]
     parties = [p["id"] for p in board["parties"]]
     pop = [t["pop"] for t in tiles]
     muni = [t["muni"] for t in tiles]
-    gov = [t["votes"][parties[0]] / sum(t["votes"].values()) for t in tiles]
-    start = board["start"]
-    errs += [f"start: {p}" for p in solver.validate_plan(start, adj, pop, rules["nDistricts"], rules["band"], muni, rules["muniLock"])]
+    votes = np.array([[t["votes"][p] for p in parties] for t in tiles], dtype=np.float32)
+    start, k0 = board["start"], rules["nDistricts"]
+    errs += [f"start (locked): {p}" for p in solver.validate_plan(start, adj, pop, k0, rules["band"], muni, rules["muniLock"])]
     for task in board["tasks"]:
         goal = task.get("goal")
-        sols = board.get("solutions", {}).get(task["id"], [])
         if not goal:
             continue
+        pi = parties.index(goal["party"])
+        sols = board.get("solutions", {}).get(task["id"], [])
         if not sols:
             errs.append(f"task {task['id']}: no known solutions")
+        dists = []
         for j, s in enumerate(sols):
             k, plan = s["k"], s["plan"]
             probs = solver.validate_plan(plan, adj, pop, k, rules["band"], muni, s["lock"])
             if probs:
                 errs.append(f"task {task['id']} solution {j}: {probs[0]}")
-            g = search.Goal(parties.index(goal["party"]), seats_needed(goal, k), goal["swings"])
-            if not search.goal_met(plan, k, gov, g):
+            if plan_seats(plan, k, votes)[pi] < seats_needed(goal, k):
                 errs.append(f"task {task['id']} solution {j}: goal not met")
-        g0 = search.Goal(parties.index(goal["party"]), seats_needed(goal, rules["nDistricts"]), goal["swings"])
-        if search.goal_met(start, rules["nDistricts"], gov, g0):
+            dists.append(solver.hungarian_tiles_changed(start, plan, k))
+        if plan_seats(start, k0, votes)[pi] >= seats_needed(goal, k0):
             errs.append(f"task {task['id']}: start map already meets the goal")
+        best = board.get("stats", {}).get("bestDrift", {}).get(task["id"])
+        if best is not None and dists and min(dists) != best:
+            errs.append(f"task {task['id']}: bestDrift {best} != nearest shipped solution {min(dists)}")
+    cap = rules.get("driftCap")
+    best_a = board.get("stats", {}).get("bestDrift", {}).get(board["tasks"][0]["id"])
+    if cap is not None and best_a is not None and not (cap < best_a <= 2 * cap):
+        errs.append(f"scrutiny cap {cap} must force exactly one reset for best route {best_a}")
     return errs
 
 

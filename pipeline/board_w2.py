@@ -1,248 +1,184 @@
 """Generate World 2 ("Prairie Province") and write boards/w2.json.
 
-    python board_w2.py [--seed N] [--quick]
+    python board_w2.py
 
-49 equal hexes, 7 districts (6–8 hexes each, ±15%), two cities (north + south) whose limits
-are locked, towns along the highway between them, countryside around. Government (blue) vs
-Opposition (orange); Opposition ≈ 52% province-wide and strongest in the cities.
+35 hexes, 5 districts of exactly 7. One city of 21 hexes (three districts' worth) whose limits
+start locked; 14 hexes of countryside (two districts). Hexes are solid Government (blue) or
+Opposition (orange), like World 1. Opposition 18/35 ≈ 51%, concentrated in the city; the city
+has only 3 Government hexes, so while the limits are locked no city district can go Government
+and the Government can win at most the 2 rural seats.
 
-Design checks (heuristic — the board is too big to enumerate):
-  * start map: compact, lock-respecting, fair (Opposition 4–3)
-  * Task A (Government majority that survives a 3-point swing) is NOT found with city limits
-    locked and 7 seats, but IS found once the lock is lifted (🚧) → the card matters
-  * Task B (Opposition, same goal) is reachable
-  * scrutiny cap = best-known Task A drift − 2, so a drift card (🔇/🗑️) is needed too
+Two mechanics:
+  * 🚧 Erase the City Limits — districts may mix city and countryside.
+  * 👀 Scrutiny cap (tiles changed vs baseline, enforced on every move) + 🗑️ Toss the Ref's
+    Report — resets the baseline to the current map, once.
+
+Every valid map is enumerated (≈724k), so pars and shares are exact:
+  * Task A: Government 3 of 5. Impossible with limits locked (checked). Par P_A with them erased.
+    Cap = ceil(P_A / 2) < P_A, so the toss is required, and one toss is enough.
+  * Task B: Opposition 4 of 5, starting from the player's Task A map.
 """
 
 from __future__ import annotations
 
-import argparse
 import json
-import random
+import math
+from itertools import permutations
 from pathlib import Path
 
-import search
+import numpy as np
+
 import solver
 
 ROOT = Path(__file__).resolve().parent.parent
 OUT_JSON = ROOT / "boards" / "w2.json"
+CACHE = Path(__file__).resolve().parent / "out" / "w2_plans.npy"
 
-K = 7
-BAND = 0.15
-SWING = 0.03
+K, SIZE = 5, 7
 GOV, OPP = 0, 1
-TARGET_OPP = 0.52
-# Opposition share by zone: city core, rest of the city, highway towns, countryside (absorbs the shift)
-PROFILE = {"core": 0.64, "city": 0.59, "town": 0.50, "far": 0.40}
-A_SEATS = {7: 4, 8: 5}  # Task A: Government majority
-B_SEATS = {7: 5, 8: 6}  # Task B: Opposition supermajority (beyond what a fair map gives)
-
-# Prairie silhouette (SW corner stepped for the mountains), rows north -> south, odd-r offset.
-ROWS = [(0, 7), (0, 7), (0, 7), (1, 7), (2, 7), (2, 7), (2, 7)]
-# Each city holds two districts' worth of hexes (like Alberta's big cities), drawn by hand.
-NORTH_CITY_CELLS = {(0, 4), (0, 5), (0, 6), (0, 7), (1, 3), (1, 4), (1, 5), (1, 6), (1, 7), (2, 3), (2, 4), (2, 5), (2, 6), (2, 7)}
-SOUTH_CITY_CELLS = {(4, 3), (4, 4), (4, 5), (4, 6), (4, 7), (5, 3), (5, 4), (5, 5), (5, 6), (5, 7), (6, 4), (6, 5), (6, 6), (6, 7)}
-NORTH_CITY = (1, 5)  # city centres (row, col), for the "core" vote zone
-SOUTH_CITY = (5, 5)
-TOWNS = {(3, 4), (3, 5), (3, 6)}  # highway corridor between the cities
-PUMPJACKS = {(0, 7), (2, 1), (4, 7), (6, 2)}
+ROWS = [(0, 5), (0, 5), (0, 5), (1, 5), (2, 5), (2, 5), (2, 5)]  # SW corner stepped (foothills)
+CITY_CENTRE = (0, 4)  # the city: 14 hexes, two districts
+CITY_SIZE = 14
+TOWN_CENTRE = (5, 4)  # the town: a 7-hex rosette, one district — small enough to crack
+N_OPP = 18  # 18/35 ≈ 51% Opposition
+# Design loop targets (exact, from full enumeration)
+A_SHARE_MAX = 0.25   # a Government majority should be the unusual map
+A_PAR = (5, 8)       # ...that takes real redrawing (cap = ceil(par/2) ≥ 3)
+B_PAR = (4, 9)
+# Minority hexes per area (keeps the lock proof: ≤ 3 Government hexes in any city/town district)
+GOV_IN_CITY, GOV_IN_TOWN, OPP_IN_COUNTY = 2, 2, 1
+PUMPJACKS = {(0, 0), (2, 1)}
 MOUNTAINS = {(3, 1), (4, 2), (5, 2), (6, 2)}
 
-
-def axial(row, col):
-    return col - (row - (row & 1)) // 2, row
+N_A_SOLUTIONS = 60   # hint targets shipped for Task A
+N_B_SOLUTIONS = 160  # Task B starts from the player's own map, so ship a wider spread
 
 
 def geometry():
     tiles = []
     for row, (c0, c1) in enumerate(ROWS):
         for col in range(c0, c1 + 1):
-            q, r = axial(row, col)
-            tiles.append({"row": row, "col": col, "q": q, "r": r})
-    coords = [(t["q"], t["r"]) for t in tiles]
-    adj = solver.hex_adjacency(coords)
+            tiles.append({"q": col - (row - (row & 1)) // 2, "r": row, "row": row, "col": col})
+    adj = solver.hex_adjacency([(t["q"], t["r"]) for t in tiles])
     index = {(t["row"], t["col"]): i for i, t in enumerate(tiles)}
 
-    north = {index[rc] for rc in NORTH_CITY_CELLS}
-    south = {index[rc] for rc in SOUTH_CITY_CELLS}
-    assert len(north) == len(south) == 14 and not (north & south)
-    return tiles, adj, index, north, south
+    def hd(a, b):
+        dq, dr = a["q"] - b["q"], a["r"] - b["r"]
+        return (abs(dq) + abs(dr) + abs(dq + dr)) / 2
+
+    c = tiles[index[CITY_CENTRE]]
+    order = sorted(range(len(tiles)), key=lambda i: (hd(tiles[i], c), -tiles[i]["col"], i))
+    city = set(order[:CITY_SIZE])
+    t = index[TOWN_CENTRE]
+    town = {t, *adj[t]}
+    assert len(town) == SIZE and not (town & city)
+    return tiles, adj, index, city, town
 
 
-def hexdist(a, b):
-    dq, dr = a["q"] - b["q"], a["r"] - b["r"]
-    return (abs(dq) + abs(dr) + abs(dq + dr)) // 2
+def all_plans(adj):
+    if CACHE.exists():
+        return np.load(CACHE)
+    plans = solver.enumerate_plans(adj, K, SIZE, SIZE)
+    CACHE.parent.mkdir(exist_ok=True)
+    np.save(CACHE, plans)
+    return plans
 
 
-def make_votes(tiles, adj, index, north, south, rng):
-    """Government share per tile. Opposition leads the cities (most in the cores), towns are
-    toss-ups, the countryside leans Government. The countryside absorbs the shift that makes
-    the province-wide Opposition share TARGET_OPP."""
-    cities = north | south
-    cores = {index[NORTH_CITY], index[SOUTH_CITY], *adj[index[NORTH_CITY]], *adj[index[SOUTH_CITY]]}
-    towns = {index[rc] for rc in TOWNS} - cities
-    opp, far = [], []
-    for i in range(len(tiles)):
-        if i in cities:
-            base = PROFILE["core"] if i in cores else PROFILE["city"]
-        elif i in towns:
-            base = PROFILE["town"]
-        else:
-            base = PROFILE["far"]
-            far.append(i)
-        opp.append(base + rng.uniform(-0.03, 0.03))
-    shift = (TARGET_OPP * len(tiles) - sum(opp)) / len(far)
-    for i in far:
-        opp[i] += shift
-    return [round(1 - o, 3) for o in opp]  # government share, 3 dp
-
-
-def random_partition(free: list[int], adj, n, size, rng, tries=2000):
-    """Random connected partition of `free` into n districts of exactly `size` (randomised growth)."""
-    free_set = set(free)
-    for _ in range(tries):
-        left = set(free_set)
-        parts = []
-        ok = True
-        for _d in range(n):
-            root = min(left)
-            part = {root}
-            frontier = [w for w in adj[root] if w in left]
-            while len(part) < size and frontier:
-                w = frontier.pop(rng.randrange(len(frontier)))
-                if w in part:
-                    continue
-                part.add(w)
-                frontier += [u for u in adj[w] if u in left and u not in part]
-            if len(part) < size:
-                ok = False
-                break
-            left -= part
-            if left and any(c % size for c in _component_sizes(left, adj)):
-                ok = False
-                break
-            parts.append(part)
-        if ok and not left:
-            return parts
-    return None
-
-
-def _component_sizes(nodes: set[int], adj):
-    seen, out = set(), []
-    for s in nodes:
-        if s in seen:
-            continue
-        stack, n = [s], 0
-        seen.add(s)
-        while stack:
-            v = stack.pop()
-            n += 1
-            for w in adj[v]:
-                if w in nodes and w not in seen:
-                    seen.add(w)
-                    stack.append(w)
-        out.append(n)
+def distances(plans: np.ndarray, start: np.ndarray, chunk: int = 40000) -> np.ndarray:
+    """Hungarian tiles-changed from `start` for every plan (permutation max over 5! labelings)."""
+    perms = np.array(list(permutations(range(K))))
+    rows = np.arange(K)
+    start_m = (start[None, :] == rows[:, None]).astype(np.int16)  # (K, n)
+    out = np.empty(len(plans), dtype=np.int16)
+    for a in range(0, len(plans), chunk):
+        p = plans[a : a + chunk]
+        m = (p[:, None, :] == rows[None, :, None]).astype(np.int16)  # (c, K, n)
+        ov = np.einsum("an,cbn->cab", start_m, m)  # (c, K, K)
+        best = ov[:, rows[None, :], perms].sum(axis=2).max(axis=1)
+        out[a : a + chunk] = plans.shape[1] - best
     return out
 
 
-def seat_count(plan, k, gov_share, party, s=0.0):
-    return search.seats_at(plan, k, search.tile_share(gov_share, party, s))[0]
-
-
-def build(seed: int, quick: bool):
-    rng = random.Random(seed)
-    tiles, adj, index, north, south = geometry()
+def main(seed: int = 7):
+    tiles, adj, index, city, town = geometry()
     n = len(tiles)
-    cities = north | south
-    muni = ["North City" if i in north else "South City" if i in south else "County" for i in range(n)]
-    gov = make_votes(tiles, adj, index, north, south, rng)
-    lo, hi = solver.int_band(n, K, BAND)
-    lo8, hi8 = solver.int_band(n, K + 1, BAND)
+    county = [i for i in range(n) if i not in city and i not in town]
+    assert len(county) == 2 * SIZE
 
-    # --- fair start map: each city split into two pure districts; countryside into three
-    county = [i for i in range(n) if i not in cities]
-    edges = [(i, j) for i in range(n) for j in adj[i] if i < j]
-    best = None
-    for _ in range(300 if quick else 2000):
-        groups = [
-            random_partition(sorted(north), adj, 2, 7, rng, tries=200),
-            random_partition(sorted(south), adj, 2, 7, rng, tries=200),
-            random_partition(county, adj, 3, 7, rng, tries=200),
-        ]
-        if not all(groups):
+    plans = all_plans(adj)
+    print(f"{len(plans)} valid plans")
+    muni_id = np.array([1 if i in city else 2 if i in town else 0 for i in range(n)])
+    # a plan respects the limits if no district mixes areas
+    locked_ok = np.ones(len(plans), dtype=bool)
+    for d in range(K):
+        m = plans == d
+        present = np.stack([(m & (muni_id == u)).any(axis=1) for u in range(3)], axis=1).sum(axis=1)
+        locked_ok &= present == 1
+    print(f"lock-respecting plans: {locked_ok.sum()}")
+    masks = [plans == d for d in range(K)]
+
+    def opp_seats_of(opp):
+        o = opp.astype(np.int8)
+        return sum(((m @ o) >= 4).astype(np.int8) for m in masks)
+
+    edges = np.array([(i, j) for i in range(n) for j in adj[i] if i < j])
+    cuts = (plans[:, edges[:, 0]] != plans[:, edges[:, 1]]).sum(axis=1)
+
+    # Design loop: where the few minority hexes sit (Government suburbs in city/town, an Opposition farm-town).
+    rng = np.random.default_rng(seed)
+    found = None
+    for attempt in range(300):
+        opp = np.array([1 if (i in city or i in town) else 0 for i in range(n)])
+        opp[rng.choice(sorted(city), GOV_IN_CITY, replace=False)] = 0
+        opp[rng.choice(sorted(town), GOV_IN_TOWN, replace=False)] = 0
+        opp[rng.choice(county, OPP_IN_COUNTY, replace=False)] = 1
+        assert opp.sum() == N_OPP
+        opp_seats = opp_seats_of(opp)
+        gov_seats = K - opp_seats
+        assert not (locked_ok & (gov_seats >= 3)).any(), "lock must block a Government majority"
+        cand = np.flatnonzero(locked_ok & (opp_seats == 3))
+        if not len(cand):
             continue
-        parts = [p for g in groups for p in g]
-        plan = [0] * n
-        for d, part in enumerate(parts):
-            for i in part:
-                plan[i] = d
-        opp0 = seat_count(plan, K, gov, OPP)
-        if opp0 != 4:
+        goal_a, goal_b = gov_seats >= 3, opp_seats >= 4
+        if not (0 < goal_a.mean() < A_SHARE_MAX):
+            print(f"  try {attempt}: A share {goal_a.mean():.1%}")
             continue
-        cut = sum(plan[i] != plan[j] for i, j in edges)
-        if best is None or cut < best[0]:
-            best = (cut, plan)
-    if not best:
-        return None, "no fair start map"
-    start = best[1]
+        s = cand[np.argmin(cuts[cand])]
+        start = plans[s].astype(int)
+        dist = distances(plans, start)
+        par_a, par_b = int(dist[goal_a].min()), int(dist[goal_b].min())
+        print(f"  try {attempt}: A {goal_a.mean():.1%} par {par_a}; B {goal_b.mean():.1%} par {par_b}", flush=True)
+        if A_PAR[0] <= par_a <= A_PAR[1] and B_PAR[0] <= par_b <= B_PAR[1]:
+            found = (opp, opp_seats, gov_seats, s, start, dist, goal_a, goal_b, par_a, par_b)
+            break
+    if not found:
+        raise SystemExit("no vote layout satisfied the design targets")
+    opp, opp_seats, gov_seats, s, start, dist, goal_a, goal_b, par_a, par_b = found
+    votes = np.stack([1 - opp, opp], axis=1)  # [gov, opp]
+    suburbs = {i for i in city | town if opp[i] == 0}
 
-    steps, restarts = (6000, 8) if quick else (15000, 24)
-    goal_a = search.Goal(GOV, K // 2 + 1, [0.0, -SWING])
-    goal_b = search.Goal(OPP, B_SEATS[K], [0.0, -SWING])
-    locked = search.Rules(K, lo, hi, lock=True)
-    open_ = search.Rules(K, lo, hi, lock=False)
+    cap = math.ceil(par_a / 2)
+    assert cap < par_a <= 2 * cap
+    print(f"start cut {cuts[s]}; A: {goal_a.sum()} maps ({goal_a.mean():.2%}), par {par_a}; "
+          f"B: {goal_b.sum()} maps ({goal_b.mean():.2%}), par {par_b}; scrutiny cap {cap}")
 
-    a_locked = search.find_solutions(start, gov, goal_a, adj, muni, locked, restarts=restarts, steps=steps, seed=seed)
-    if a_locked:
-        return None, f"Task A solvable without lifting city limits (drift {a_locked[0][0]})"
-    a_open = search.find_solutions(start, gov, goal_a, adj, muni, open_, restarts=restarts, steps=steps, seed=seed + 1)
-    if not a_open:
-        return None, "Task A unreachable even with city limits lifted"
-    par_a = a_open[0][0]
-    if not (6 <= par_a <= 16):
-        return None, f"Task A best drift {par_a} out of range"
-    if search.goal_met(start, K, gov, goal_b):
-        return None, "fair start already gives the Opposition Task B"
-    b_open = search.find_solutions(start, gov, goal_b, adj, muni, open_, restarts=restarts, steps=steps, seed=seed + 2)
-    if not b_open:
-        return None, "Task B unreachable"
-
-    # Bonus Seat variants (8 districts, majority 5): seed a new district from a random hex.
-    def seeded(rng_):
-        p = list(start)
-        while True:
-            t = rng_.randrange(n)
-            if sum(x == p[t] for x in p) > lo8:
-                p[t] = K
-                return p
-
-    bonus_rules = search.Rules(K + 1, 1, hi8, lock=False)  # new district starts at 1 hex
-    goal_a8 = search.Goal(GOV, A_SEATS[K + 1], [0.0, -SWING])
-    goal_b8 = search.Goal(OPP, B_SEATS[K + 1], [0.0, -SWING])
-
-    def finish_band(sols):
-        return [(d, p) for d, p in sols if all(lo8 <= p.count(x) <= hi8 for x in range(K + 1))]
-
-    a8 = finish_band(search.find_solutions(start, gov, goal_a8, adj, muni, bonus_rules, restarts=restarts // 2, steps=steps, seed=seed + 3, init_fn=seeded, final_lo=lo8))
-    b8 = finish_band(search.find_solutions(start, gov, goal_b8, adj, muni, bonus_rules, restarts=restarts // 2, steps=steps, seed=seed + 4, init_fn=seeded, final_lo=lo8))
-
-    cap = max(3, par_a - 2)
-    report = (
-        f"start opp seats {seat_count(start, K, gov, OPP)}/{K} (gov at -3%: {seat_count(start, K, gov, GOV, -SWING)}), "
-        f"province opp {1 - sum(gov) / n:.3f}; A locked: none; A open best {par_a} ({len(a_open)} sols); "
-        f"B open best {b_open[0][0]} ({len(b_open)}); A8 {len(a8)}; B8 {len(b8)}; cap {cap}"
-    )
+    a_idx = np.flatnonzero(goal_a)[np.argsort(dist[goal_a], kind="stable")][:N_A_SOLUTIONS]
+    # Task B targets: nearest to the start, plus nearest to each shipped Task A map (where players will be).
+    b_all = np.flatnonzero(goal_b)
+    b_pick = list(b_all[np.argsort(dist[goal_b], kind="stable")][:60])
+    for a in a_idx[:20]:
+        da = distances(plans[b_all], plans[a].astype(int))
+        b_pick += list(b_all[np.argsort(da, kind="stable")[:5]])
+    b_idx = list(dict.fromkeys(int(i) for i in b_pick))[:N_B_SOLUTIONS]
 
     icons = []
-    towns = {index[rc] for rc in TOWNS} - cities
     for i, t in enumerate(tiles):
         rc = (t["row"], t["col"])
         icons.append(
-            "city" if i in cities else "town" if i in towns else "pumpjack" if rc in PUMPJACKS
+            "city" if i in city else "town" if i in town else "pumpjack" if rc in PUMPJACKS
             else "mountain" if rc in MOUNTAINS else "farm"
         )
 
-    sols = lambda lst, k, lock, m=12: [{"k": k, "lock": lock, "plan": p} for _, p in lst[:m]]
     board = {
         "id": "w2",
         "title": "Prairie Province",
@@ -257,67 +193,51 @@ def build(seed: int, quick: bool):
                 "r": t["r"],
                 "tier": 1,
                 "pop": 1,
-                "votes": {"government": gov[i], "opposition": round(1 - gov[i], 3)},
-                "muni": muni[i] if i in cities else None,
+                "votes": {"government": int(votes[i, GOV]), "opposition": int(votes[i, OPP])},
+                "muni": "City" if i in city else "Town" if i in town else None,
                 "icon": icons[i],
                 "outline": None,
             }
             for i, t in enumerate(tiles)
         ],
         "adjacency": adj,
-        "start": start,
-        "rules": {
-            "nDistricts": K,
-            "band": BAND,
-            "muniLock": True,
-            "powers": ["seat", "limits", "hearings", "toss"],
-            "driftCap": cap,
-        },
+        "start": start.tolist(),
+        "rules": {"nDistricts": K, "band": 0.0, "muniLock": True, "powers": ["limits", "toss"], "driftCap": cap},
         "tasks": [
             {
                 "id": "ta",
                 "role": "government",
-                "intro": ["You're the Government.", "You're behind in the cities.", "You also hold the pen."],
-                "prompt": "Win a Government majority that survives a 3-point swing.",
-                "goal": {"party": "government", "minSeats": A_SEATS[K], "minSeatsByK": {str(k): v for k, v in A_SEATS.items()}, "swings": [0, -SWING]},
+                "intro": ["You're the Government.", "You're behind in the city and the town.", "You also hold the pen."],
+                "prompt": "Government: win 3 seats.",
+                "goal": {"party": "government", "minSeats": 3, "swings": [0]},
                 "par": None,
-                "success": "A majority — even if 3% of voters turn on you.",
+                "success": "A Government majority. Same votes as before.",
                 "caption": "Government's map",
             },
             {
                 "id": "tb",
                 "role": "opposition",
-                "intro": ["Now imagine the Opposition wins.", "And they get the pen."],
-                "prompt": "Win 5 of 7 seats for the Opposition — even after a 3-point swing.",
-                "goal": {"party": "opposition", "minSeats": B_SEATS[K], "minSeatsByK": {str(k): v for k, v in B_SEATS.items()}, "swings": [0, -SWING]},
+                "intro": ["Now imagine the Opposition wins.", "The city limits are still gone.", "And now they hold the pen."],
+                "prompt": "Opposition: win 4 seats.",
+                "goal": {"party": "opposition", "minSeats": 4, "swings": [0]},
                 "par": None,
                 "success": "Same votes. Same trick. Other side.",
                 "caption": "Opposition's map",
             },
         ],
-        "stats": {"nPlans": 0, "seatDist": {}, "bestDrift": {"ta": par_a, "tb": b_open[0][0]}},
+        "stats": {
+            "nPlans": int(len(plans)),
+            "seatDist": {},
+            "goalShare": {"ta": round(float(goal_a.mean()), 4), "tb": round(float(goal_b.mean()), 4)},
+            "bestDrift": {"ta": par_a, "tb": par_b},
+        },
         "solutions": {
-            "ta": sols(a_open, K, False) + sols(a8, K + 1, False, 6),
-            "tb": sols(b_open, K, False) + sols(b8, K + 1, False, 6),
+            "ta": [{"k": K, "lock": False, "plan": plans[i].tolist()} for i in a_idx],
+            "tb": [{"k": K, "lock": False, "plan": plans[i].tolist()} for i in b_idx],
         },
     }
-    return board, report
-
-
-def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--seed", type=int, default=1)
-    ap.add_argument("--tries", type=int, default=12)
-    ap.add_argument("--quick", action="store_true")
-    args = ap.parse_args()
-    for s in range(args.seed, args.seed + args.tries):
-        board, report = build(s, args.quick)
-        print(f"seed {s}: {report}", flush=True)
-        if board:
-            OUT_JSON.write_text(json.dumps(board, indent=1, ensure_ascii=False) + "\n")
-            print(f"wrote {OUT_JSON}")
-            return
-    raise SystemExit("no seed satisfied the design checks")
+    OUT_JSON.write_text(json.dumps(board, indent=1, ensure_ascii=False) + "\n")
+    print(f"wrote {OUT_JSON}")
 
 
 if __name__ == "__main__":

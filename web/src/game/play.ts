@@ -17,6 +17,8 @@ type Snapshot = {
 };
 
 export type PlayState = Snapshot & {
+  /** Max scrutiny allowed at any moment (moves past it are refused). */
+  cap?: number;
   history: Snapshot[];
   selected: number | null;
   /** Waiting for the player to tap the seed hex for ➕ Bonus Seat. */
@@ -32,20 +34,21 @@ export type PlayAction =
   | { type: "undo" }
   | { type: "reset" };
 
-export type PlayInit = { assignment?: number[]; nDistricts?: number };
+export type PlayInit = { assignment?: number[]; nDistricts?: number; driftCap?: number; muniLock?: boolean };
 
 export function initPlay(board: Board, init: PlayInit = {}): PlayState {
   const assignment = [...(init.assignment ?? board.start)];
   return {
     assignment,
     nDistricts: init.nDistricts ?? board.rules.nDistricts,
-    muniLock: board.rules.muniLock,
+    muniLock: init.muniLock ?? board.rules.muniLock,
     baseline: assignment,
     frozenDrift: null,
     powersUsed: [],
     history: [],
     selected: null,
     seeding: false,
+    cap: init.driftCap ?? board.rules.driftCap,
   };
 }
 
@@ -61,6 +64,21 @@ const snap = (s: PlayState): Snapshot => ({
 /** Public scrutiny: hexes changed since the baseline, unless the hearings were skipped. */
 export function drift(s: Pick<PlayState, "assignment" | "baseline" | "frozenDrift">): number {
   return s.frozenDrift ?? tilesChanged(s.baseline, s.assignment);
+}
+
+/** Would moving `tile` into `district` push public scrutiny past the cap? */
+export function overCap(s: PlayState, tile: number, district: number): boolean {
+  if (s.cap === undefined || s.frozenDrift !== null) return false;
+  const next = [...s.assignment];
+  next[tile] = district;
+  return tilesChanged(s.baseline, next) > s.cap;
+}
+
+/** Districts this tile may move into right now: adjacent, not its last hex, and within scrutiny. */
+export function allowedTargets(board: Board, s: PlayState, tile: number): Set<number> {
+  const out = new Set<number>();
+  for (const d of moveTargets(board, s.assignment, tile)) if (!overCap(s, tile, d)) out.add(d);
+  return out;
 }
 
 export function canPlay(board: Board, s: PlayState, id: PowerId): boolean {
@@ -92,12 +110,13 @@ export function playReducer(board: Board, init: PlayInit = {}) {
         }
         const target = s.assignment[a.tile];
         if (!moveTargets(board, s.assignment, s.selected).has(target)) return { ...s, selected: a.tile };
+        if (overCap(s, s.selected, target)) return s; // too obvious: refused, keep the hex picked up
         return move(s, s.selected, target);
       }
       case "select":
         return { ...s, selected: a.tile, seeding: false };
       case "move":
-        if (a.district >= s.nDistricts || !moveTargets(board, s.assignment, a.tile).has(a.district)) return s;
+        if (a.district >= s.nDistricts || !allowedTargets(board, s, a.tile).has(a.district)) return s;
         return move(s, a.tile, a.district);
       case "power": {
         if (!canPlay(board, s, a.id)) return s;

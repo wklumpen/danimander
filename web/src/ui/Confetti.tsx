@@ -1,4 +1,4 @@
-const COLORS = ["#184484", "#ff7300", "#ffd800", "#a3b4ce", "#ffc799"];
+const COLORS = ["#762a83", "#1b7837", "#184484", "#ff7300", "#ffd800"];
 
 export function Confetti() {
   return (

@@ -20,7 +20,7 @@ export function PowerCards({ available, used, canPlay, highlight, onPlay }: Prop
       <div className="powers" role="toolbar" aria-label="Power cards">
         {available.map((id) => {
           const p = powers[id];
-          const isUsed = used.includes(id);
+          const isUsed = used.includes(id) || !canPlay(id);
           return (
             <button
               key={id}

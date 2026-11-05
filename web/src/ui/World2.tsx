@@ -12,6 +12,15 @@ import { ShareText } from "./ShareText";
 
 export const board2 = boardJson as unknown as BoardT;
 
+/**
+ * Task B starts from the player's own Task A map, so its scrutiny cap must leave a route:
+ * at least half the distance (one toss) to the nearest known Opposition win.
+ */
+function capFor(from: number[]): number {
+  const d = Math.min(...(board2.solutions?.tb ?? []).map((s) => tilesChanged(from, s.plan)));
+  return Math.max(board2.rules.driftCap ?? 0, Math.ceil(d / 2));
+}
+
 type Stage = "introA" | "a" | "introB" | "b" | "reveal";
 
 function Intro({ lines, onGo }: { lines: string[]; onGo: () => void }) {
@@ -53,7 +62,10 @@ export function World2({ onInfo, onStage }: { onInfo: () => void; onStage?: (pla
             [taskB.caption ?? "B", b.assignment, b.nDistricts],
           ]}
         />
-        <p>{w2.reveal.redrawn(a.changed + movedB)}</p>
+        <p>
+          {w2.reveal.stat(board2.stats.nPlans, `${Math.round((board2.stats.goalShare?.ta ?? 0) * 100)}%`)}{" "}
+          {w2.reveal.redrawn(a.changed + movedB)}.
+        </p>
         <p className="core">{w2.reveal.sub}</p>
         <button className="primary" onClick={onInfo}>{w2.reveal.cta}</button>
         <ShareText
@@ -81,7 +93,7 @@ export function World2({ onInfo, onStage }: { onInfo: () => void; onStage?: (pla
         key={`${inB ? "b" : "a"}-${run}`}
         board={board2}
         task={task}
-        init={inB && a ? { assignment: a.assignment, nDistricts: a.nDistricts } : undefined}
+        init={inB && a ? { assignment: a.assignment, nDistricts: a.nDistricts, driftCap: capFor(a.assignment), muniLock: false } : undefined}
         onWin={(r) => {
           if (inB) setB(r);
           else setA(r);

@@ -61,6 +61,8 @@ export type Board = {
     nPlans: number;
     seatDist: Record<PartyId, Record<string, number>>;
     goalShare?: Record<string, number>;
+    /** Exact minimum tiles changed from the start per task (big boards). */
+    bestDrift?: Record<string, number>;
   };
   examples?: Record<string, number[]>;
   /** Known goal plans per task for boards too big to enumerate (hint targets). */

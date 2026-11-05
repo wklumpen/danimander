@@ -37,7 +37,7 @@ function SeatBar({ board, seats, startSeats, nDistricts: k }: Pick<Props, "board
   // Bracket width for n square boxes, in terms of the CSS box/gap variables.
   const span = (n: number) => `calc(${n} * var(--seat) + ${Math.max(n - 1, 0)} * var(--seat-gap) + 2 * var(--seat-pad))`;
   return (
-    <div className={k > 5 ? "seatbar stacked" : "seatbar"} role="img" aria-label={`${a.label} ${seats[a.id]} seats, ${b.label} ${seats[b.id]} seats`}>
+    <div className={k > 5 || a.label.length + b.label.length > 12 ? "seatbar stacked" : "seatbar"} role="img" aria-label={`${a.label} ${seats[a.id]} seats, ${b.label} ${seats[b.id]} seats`}>
       <span className={`seat-label text-${col(a)}`}>{a.label} <b>{seats[a.id]}</b></span>
       <div className="seat-row">
         {Array.from({ length: k }, (_, i) => {

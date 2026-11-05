@@ -9,10 +9,9 @@ export const howto = {
     { icon: "⭐", text: "Use as few moves as you can. Stuck? Tap Hint." },
   ],
   extras: [
-    { icon: "🏙️", text: "Dashed lines are city limits. While they're locked, a district can't mix city and country." },
-    { icon: "🗳️", text: "Lighter hexes are closer races. Your majority has to survive a 3-point swing against you." },
-    { icon: "👀", text: "Redraw too much and the public notices: watch the scrutiny meter." },
-    { icon: "🃏", text: "Power cards bend the rules. Each one really happened in Alberta — tap it to see." },
+    { icon: "🏙️", text: "Dashed lines are city and town limits. While they're locked, a district can't mix them with the countryside." },
+    { icon: "👀", text: "Every hex you redraw adds public scrutiny. At the limit, you can't redraw any more." },
+    { icon: "🃏", text: "Power cards bend the rules, once each. Both really happened in Alberta — tap one to see." },
   ],
   close: "Got it",
 };

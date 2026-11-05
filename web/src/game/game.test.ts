@@ -20,9 +20,9 @@ describe("parity with pipeline/validate.py fixtures", () => {
 });
 
 describe("board w1", () => {
-  it("start map is valid and 3-2 Blue", () => {
+  it("start map is valid and 3-2 Purple", () => {
     expect(validatePlan(b, b.start)).toEqual([]);
-    expect(seatTally(b, winners(b, b.start, k))).toEqual({ blue: 3, orange: 2 });
+    expect(seatTally(b, winners(b, b.start, k))).toEqual({ purple: 3, green: 2 });
   });
 
   it("single move makes the map temporarily invalid", () => {
@@ -56,7 +56,7 @@ describe("encode", () => {
   it("round-trips a plan", () => {
     const assignment = [...b.start];
     assignment[3] = (assignment[3] + 1) % k;
-    const plan = { boardId: "w1", taskId: "t1", role: "orange", assignment, powersUsed: [], nDistricts: k };
+    const plan = { boardId: "w1", taskId: "t1", role: "green", assignment, powersUsed: [], nDistricts: k };
     expect(decodePlan(encodePlan(plan, b.start), () => b.start)).toEqual(plan);
   });
 
@@ -79,9 +79,9 @@ describe("swing", () => {
 
 describe("share text", async () => {
   const { seatSquares, shareText } = await import("./shareText");
-  it("renders seats as squares, Blue from the left", () => {
-    expect(seatSquares(b, b.start)).toBe("🟦🟦🟦🟧🟧");
-    expect(seatSquares(b, b.examples!.t1)).toBe("🟦🟦🟧🟧🟧");
+  it("renders seats as squares, Purple from the left", () => {
+    expect(seatSquares(b, b.start)).toBe("🟪🟪🟪🟩🟩");
+    expect(seatSquares(b, b.examples!.t1)).toBe("🟪🟪🟩🟩🟩");
   });
   it("one line per puzzle with move counts and the link", () => {
     const text = shareText(b, "Dani-Mander #1", [
@@ -89,7 +89,7 @@ describe("share text", async () => {
       { assignment: b.examples!.t2, moves: 1, hints: 2 },
     ], "http://danimander.ca/#daily=2026-11-05");
     expect(text).toBe(
-      "I gerrymandered Dani-Mander #1 🦎\n🟦🟦🟧🟧🟧 in 4 moves\n🟦🟦🟦🟦🟦 in 1 move (+2 hints)\nCan you do it in fewer? http://danimander.ca/#daily=2026-11-05",
+      "I gerrymandered Dani-Mander #1 🦎\n🟪🟪🟩🟩🟩 in 4 moves\n🟪🟪🟪🟪🟪 in 1 move (+2 hints)\nCan you do it in fewer? http://danimander.ca/#daily=2026-11-05",
     );
   });
 });

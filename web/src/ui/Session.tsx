@@ -4,7 +4,7 @@ import { quips } from "../content/quips";
 import { w1 as copy } from "../content/w1";
 import { w2 } from "../content/w2";
 import { tilesChanged } from "../game/drift";
-import { canPlay, drift, initPlay, playReducer, runElection, type PlayInit } from "../game/play";
+import { allowedTargets, canPlay, drift, initPlay, overCap, playReducer, runElection, type PlayInit } from "../game/play";
 import { seatTally, voteShare, winners } from "../game/score";
 import { hint } from "../game/solver";
 import type { Board as BoardT, PowerId, Task } from "../game/types";
@@ -58,10 +58,12 @@ export function Session({ board, task, init, onWin, winActions }: Props) {
   const seats = seatTally(board, winners(board, play.assignment, k));
   const startSeats = useMemo(() => seatTally(board, winners(board, board.start, board.rules.nDistricts)), [board]);
   const share = useMemo(() => voteShare(board), [board]);
-  const targets = play.selected === null ? undefined : moveTargets(board, play.assignment, play.selected);
+  const targets = play.selected === null ? undefined : allowedTargets(board, play, play.selected);
+  const capBlocked =
+    play.selected !== null && targets!.size === 0 && moveTargets(board, play.assignment, play.selected).size > 0;
   const lastHex = play.selected !== null && isLastTile(play.assignment, play.selected);
   const goalParty = board.parties.find((p) => p.id === task.goal!.party)!;
-  const cap = board.rules.driftCap;
+  const cap = play.cap;
   const scrutiny = drift(play);
   const tooObvious = cap !== undefined && scrutiny > cap;
 
@@ -119,14 +121,13 @@ export function Session({ board, task, init, onWin, winActions }: Props) {
       return;
     }
     setHintsUsed((n) => n + 1);
-    // Heading over the scrutiny cap? Point at a card that hides the redraw before suggesting more moves.
-    if (!("card" in h) && cap !== undefined && play.frozenDrift === null && scrutiny + h.remaining > cap) {
-      const cover = (["hearings", "toss"] as const).find((id) => canPlay(board, play, id));
-      if (cover) {
-        setHintCard(cover);
-        setNote(powerUi.tryCard(`${powers[cover].icon} ${powers[cover].name}`));
-        return;
-      }
+    // The next move would be too obvious? Point at the card that resets scrutiny.
+    if (!("card" in h) && overCap(play, h.tile, h.district)) {
+      if (canPlay(board, play, "toss")) {
+        setHintCard("toss");
+        setNote(powerUi.tryCard(`${powers.toss.icon} ${powers.toss.name}`));
+      } else setNote(w2.noRoom);
+      return;
     }
     if ("card" in h) {
       setHintCard(h.card);
@@ -143,10 +144,11 @@ export function Session({ board, task, init, onWin, winActions }: Props) {
       ? copy.hud.pickTile
       : lastHex
         ? copy.hud.lastHex
-        : copy.hud.pickTarget;
+        : capBlocked
+          ? w2.capBlocked
+          : copy.hud.pickTarget;
 
   const status = note ?? (tooObvious ? w2.tooObvious(cap!) : mixed ? w2.mixed : null);
-  const swung = missed?.bySwing.find((b) => b.swing !== 0);
 
   return (
     <>
@@ -157,7 +159,7 @@ export function Session({ board, task, init, onWin, winActions }: Props) {
             <svg viewBox="0 0 24 24" aria-hidden><use href="#ic-salamander" /></svg> {quip.text}
           </p>
         ) : (
-          <p className={lastHex || play.seeding ? "hint warn-soft" : "hint"}>
+          <p className={lastHex || play.seeding || capBlocked ? "hint warn-soft" : "hint"}>
             {instruction}
             {play.seeding && (
               <button className="link inline" onClick={() => dispatch({ type: "cancelSeed" })}> {w2.cancel}</button>
@@ -225,9 +227,7 @@ export function Session({ board, task, init, onWin, winActions }: Props) {
       {missed && (
         <div className="result" role="status">
           <p>
-            {swung
-              ? w2.swingResult(goalParty.label, missed.seats[goalParty.id], swung.seats[goalParty.id], missed.need)
-              : copy.result.missed(goalParty.label, missed.seats[goalParty.id])}
+            {copy.result.missed(goalParty.label, missed.seats[goalParty.id])}
           </p>
           <button onClick={() => setMissed(null)}>{copy.result.retry}</button>
         </div>

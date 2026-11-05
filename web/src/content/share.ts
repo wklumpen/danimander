@@ -13,7 +13,7 @@ export const share = {
   },
   filename: "danimander.png",
   // Text result for chat apps: one line per puzzle, seats as coloured squares.
-  squares: { blue: "🟦", orange: "🟧" } as Record<string, string>,
+  squares: { blue: "🟦", orange: "🟧", purple: "🟪", green: "🟩" } as Record<string, string>,
   tieSquare: "⬜",
   heading: (what: string) => `I gerrymandered ${what} 🦎`,
   line: (squares: string, moves: number, hints: number) =>

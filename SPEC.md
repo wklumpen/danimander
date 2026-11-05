@@ -334,9 +334,9 @@ SPEC.md
 
 ## 17. Implementation notes (decisions that changed the spec)
 
-- **Colours:** all worlds use Blue (#184484) vs Orange (#FF7300), named by colour only in World 1 and the daily; World 2 is Government (blue) vs Opposition (orange). Party palette is `parties[].color`.
+- **Colours:** World 1 and the daily use neutral Purple vs Green, named by colour only. Blue (#184484) vs Orange (#FF7300) arrive with Government vs Opposition in World 2. Party palette is `parties[].color`.
 - **Districts never disappear:** a district's last hex can't move; only ➕ Bonus Seat changes the count.
 - **Daily puzzle:** generated in the browser from the Alberta date (`#daily=YYYY-MM-DD`). Two parts on the same votes and start map (pack + crack); the date picks which colour holds 60% and which part comes first. Par 3–6, goal maps <15%.
 - **Hints:** World 1 / daily use full enumeration in the browser; World 2 ships known solutions (`solutions` in the board JSON) and hints point at power cards when a solution needs one.
 - **Sharing:** the main share is paste-anywhere text (seat squares + move counts per puzzle + link); the PNG card is secondary.
-- **World 2 board:** each city holds 14 hexes (two districts) so that the municipal lock caps the Government at the 3 rural seats; Task A needs 🚧 Erase the City Limits. A "scrutiny" cap (tiles changed vs baseline, `rules.driftCap`) blocks the election when exceeded, which is what 🔇 Skip the Hearings and 🗑️ Toss the Ref's Report get around. Task B asks the Opposition for 5 of 7 seats (a fair map already gives them a majority). No stars in World 2.
+- **World 2, simplified:** 35 hexes, 5 districts of exactly 7, solid-colour hexes (no swing, no percentages). One city (14 hexes, 2 districts), one town (7 hexes, 1 district), countryside (14, 2). Two mechanics only: 🚧 Erase the City Limits (the lock makes a Government majority provably impossible) and a scrutiny cap enforced on every move, reset once by 🗑️ Toss the Ref's Report. All 723,983 maps are enumerated: Task A (Government 3 of 5) has a minimum of 6 hexes against a cap of 3, so exactly one toss is needed. Task B (Opposition 4 of 5) starts from the player's map with the limits still erased; its cap adapts so one toss always suffices. Bonus Seat and Skip the Hearings stay as info-page receipts only. No stars in World 2.

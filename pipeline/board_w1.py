@@ -6,7 +6,7 @@ Usage:
     python board_w1.py --seed 7 --samples 40000
 
 Design filters (SPEC §11):
-    start map is 3-2 Blue and compact; task 1 par in [2, 4]; task 2 par in [3, 6];
+    start map is 3-2 Purple and compact; task 1 par in [2, 4]; task 2 par in [3, 6];
     goal plans are < 15% of all valid plans.
 """
 
@@ -25,8 +25,8 @@ OUT_JSON = ROOT / "boards" / "w1.json"
 REPORT = Path(__file__).resolve().parent / "out" / "w1_candidates.txt"
 
 N_DISTRICTS = 5
-N_ORANGE = 10  # 15 Blue / 10 Orange
-BLUE, ORANGE = 0, 1
+N_GREEN = 10  # 15 Purple / 10 Green
+PURPLE, GREEN = 0, 1
 
 # Mini-Alberta: rows north -> south, (first_col, last_col) in odd-r offset coords.
 # The SW corner is cut away in steps to suggest the Rockies.
@@ -67,7 +67,7 @@ def ascii_map(tiles, labels) -> str:
 
 
 def sample_layouts(tiles, rng, n_samples):
-    """Half uniform-random, half town-leaning (Orange more likely near town)."""
+    """Half uniform-random, half town-leaning (Green more likely near town)."""
     n = len(tiles)
     town = [i for i, t in enumerate(tiles) if t["icon"] == "town"]
     coords = np.array([(t["q"], t["r"]) for t in tiles])
@@ -80,11 +80,11 @@ def sample_layouts(tiles, rng, n_samples):
     seen = set()
     for k in range(n_samples):
         if k % 2 == 0:
-            oranges = rng.choice(n, N_ORANGE, replace=False)
+            greens = rng.choice(n, N_GREEN, replace=False)
         else:
             score = -d_town * rng.uniform(0.3, 1.5) + rng.normal(0, 1.2, n)
-            oranges = np.argsort(-score)[:N_ORANGE]
-        key = tuple(sorted(oranges.tolist()))
+            greens = np.argsort(-score)[:N_GREEN]
+        key = tuple(sorted(greens.tolist()))
         if key in seen:
             continue
         seen.add(key)
@@ -111,20 +111,20 @@ def search(seed: int, n_samples: int, n_starts: int):
 
     rng = np.random.default_rng(seed)
     survivors = []
-    for oranges in sample_layouts(tiles, rng, n_samples):
+    for greens in sample_layouts(tiles, rng, n_samples):
         votes = np.zeros((n, 2), dtype=np.float32)
-        votes[:, BLUE] = 1
-        votes[oranges, BLUE] = 0
-        votes[oranges, ORANGE] = 1
-        orange_in = membership @ votes[:, ORANGE]  # (P, k)
-        orange_seats = (orange_in >= 3).sum(axis=1)
-        g1 = orange_seats >= 3
-        g2 = orange_seats == 0
+        votes[:, PURPLE] = 1
+        votes[greens, PURPLE] = 0
+        votes[greens, GREEN] = 1
+        green_in = membership @ votes[:, GREEN]  # (P, k)
+        green_seats = (green_in >= 3).sum(axis=1)
+        g1 = green_seats >= 3
+        g2 = green_seats == 0
         share1, share2 = g1.mean(), g2.mean()
         if not (0 < share1 < MAX_GOAL_SHARE and 0 < share2 < MAX_GOAL_SHARE):
             continue
         for si, s in enumerate(start_idx):
-            if orange_seats[s] != 2:
+            if green_seats[s] != 2:
                 continue
             par1 = dists[si][g1].min()
             par2 = dists[si][g2].min()
@@ -135,16 +135,16 @@ def search(seed: int, n_samples: int, n_starts: int):
                 abs(par1 - 3) + abs(par2 - 4.5) * 0.7
                 + (cuts[s] - cuts.min()) * 0.5
                 + (share1 + share2) * 10
-                - (orange_seats == 2).mean() * 2
+                - (green_seats == 2).mean() * 2
             )
-            survivors.append(dict(score=float(score), oranges=oranges, start=int(s),
+            survivors.append(dict(score=float(score), greens=greens, start=int(s),
                                   par1=int(par1), par2=int(par2),
                                   share1=float(share1), share2=float(share2), cuts=int(cuts[s])))
     survivors.sort(key=lambda c: c["score"])
     # One entry per vote layout (keep its best start map).
     uniq, seen = [], set()
     for c in survivors:
-        key = tuple(c["oranges"].tolist())
+        key = tuple(c["greens"].tolist())
         if key not in seen:
             seen.add(key)
             uniq.append(c)
@@ -166,9 +166,9 @@ def relabel_to(start, plan) -> list[int]:
 def build_board(tiles, adj, plans, membership, cand):
     n = len(tiles)
     votes = np.zeros((n, 2), dtype=np.float32)
-    votes[:, BLUE] = 1
-    votes[cand["oranges"], BLUE] = 0
-    votes[cand["oranges"], ORANGE] = 1
+    votes[:, PURPLE] = 1
+    votes[cand["greens"], PURPLE] = 0
+    votes[cand["greens"], GREEN] = 1
     seat_counts = solver.seats(membership, votes)  # (P, 2)
 
     def dist(col):
@@ -178,15 +178,15 @@ def build_board(tiles, adj, plans, membership, cand):
     start = plans[cand["start"]].tolist()
     # Closest goal-satisfying plan per task (used for the OG image and as a hint/answer key).
     changed = solver.tiles_changed(membership, np.array(start), N_DISTRICTS)
-    orange = seat_counts[:, ORANGE]
+    green = seat_counts[:, GREEN]
     examples = {}
-    for tid, ok in (("t1", orange >= 3), ("t2", orange == 0)):
+    for tid, ok in (("t1", green >= 3), ("t2", green == 0)):
         idx = np.flatnonzero(ok)
         examples[tid] = relabel_to(start, plans[idx[np.argmin(changed[idx])]])
     return {
         "id": "w1",
         "title": "Coulee County",
-        "parties": [{"id": "blue", "label": "Blue"}, {"id": "orange", "label": "Orange"}],
+        "parties": [{"id": "purple", "label": "Purple"}, {"id": "green", "label": "Green"}],
         "tiles": [
             {
                 "id": i,
@@ -194,7 +194,7 @@ def build_board(tiles, adj, plans, membership, cand):
                 "r": t["r"],
                 "tier": 1,
                 "pop": 1,
-                "votes": {"blue": int(votes[i, BLUE]), "orange": int(votes[i, ORANGE])},
+                "votes": {"purple": int(votes[i, PURPLE]), "green": int(votes[i, GREEN])},
                 "muni": None,
                 "icon": t["icon"],
                 "outline": None,
@@ -207,15 +207,15 @@ def build_board(tiles, adj, plans, membership, cand):
         "tasks": [
             {
                 "id": "t1",
-                "prompt": "Help Orange win 3 seats.",
-                "goal": {"party": "orange", "minSeats": 3, "swings": [0]},
+                "prompt": "Help Green win 3 seats.",
+                "goal": {"party": "green", "minSeats": 3, "swings": [0]},
                 "par": cand["par1"],
                 "success": "Nice — that's called packing: stuff their voters into a few districts.",
             },
             {
                 "id": "t2",
-                "prompt": "Now give Blue all 5.",
-                "goal": {"party": "blue", "minSeats": 5, "swings": [0]},
+                "prompt": "Now give Purple all 5.",
+                "goal": {"party": "purple", "minSeats": 5, "swings": [0]},
                 "par": cand["par2"],
                 "success": "That's cracking: spread their voters thin so they lose everywhere.",
             },
@@ -229,7 +229,7 @@ def build_board(tiles, adj, plans, membership, cand):
         ],
         "stats": {
             "nPlans": int(len(plans)),
-            "seatDist": {"blue": dist(BLUE), "orange": dist(ORANGE)},
+            "seatDist": {"purple": dist(PURPLE), "green": dist(GREEN)},
             "goalShare": {"t1": round(cand["share1"], 4), "t2": round(cand["share2"], 4)},
         },
         "examples": examples,
@@ -253,12 +253,12 @@ def main():
     REPORT.parent.mkdir(exist_ok=True)
     with REPORT.open("w") as f:
         for i, c in enumerate(cands[: args.report]):
-            votes = ["G" if j in set(c["oranges"].tolist()) else "p" for j in range(len(tiles))]
+            votes = ["G" if j in set(c["greens"].tolist()) else "p" for j in range(len(tiles))]
             start = plans[c["start"]]
             both = [f"{votes[j]}{start[j]}" for j in range(len(tiles))]
             f.write(
                 f"#{i}  score={c['score']:.2f}  par1={c['par1']} par2={c['par2']}  "
-                f"orange3={c['share1']:.1%} blue5={c['share2']:.1%}  start_cuts={c['cuts']}\n"
+                f"green3={c['share1']:.1%} purple5={c['share2']:.1%}  start_cuts={c['cuts']}\n"
             )
             f.write(ascii_map(tiles, both) + "\n\n")
     print(f"report: {REPORT}")
@@ -268,7 +268,7 @@ def main():
     OUT_JSON.write_text(json.dumps(board, indent=1, ensure_ascii=False) + "\n")
     c = cands[args.pick]
     print(f"wrote {OUT_JSON} (candidate #{args.pick}: par1={c['par1']} par2={c['par2']}, "
-          f"orange3={c['share1']:.1%}, blue5={c['share2']:.1%})")
+          f"green3={c['share1']:.1%}, purple5={c['share2']:.1%})")
 
 
 if __name__ == "__main__":
