@@ -331,3 +331,12 @@ SPEC.md
 - Never hard-code facts about Alberta in components — all copy lives in `/web/src/content` so it can be fact-checked in one place.
 - Don't add dependencies beyond those listed without a reason in the PR description.
 - Mobile portrait is the primary layout; test at 375×667.
+
+## 17. Implementation notes (decisions that changed the spec)
+
+- **Colours:** all worlds use Blue (#184484) vs Orange (#FF7300), named by colour only in World 1 and the daily; World 2 is Government (blue) vs Opposition (orange). Party palette is `parties[].color`.
+- **Districts never disappear:** a district's last hex can't move; only ➕ Bonus Seat changes the count.
+- **Daily puzzle:** generated in the browser from the Alberta date (`#daily=YYYY-MM-DD`). Two parts on the same votes and start map (pack + crack); the date picks which colour holds 60% and which part comes first. Par 3–6, goal maps <15%.
+- **Hints:** World 1 / daily use full enumeration in the browser; World 2 ships known solutions (`solutions` in the board JSON) and hints point at power cards when a solution needs one.
+- **Sharing:** the main share is paste-anywhere text (seat squares + move counts per puzzle + link); the PNG card is secondary.
+- **World 2 board:** each city holds 14 hexes (two districts) so that the municipal lock caps the Government at the 3 rural seats; Task A needs 🚧 Erase the City Limits. A "scrutiny" cap (tiles changed vs baseline, `rules.driftCap`) blocks the election when exceeded, which is what 🔇 Skip the Hearings and 🗑️ Toss the Ref's Report get around. Task B asks the Opposition for 5 of 7 seats (a fair map already gives them a majority). No stars in World 2.

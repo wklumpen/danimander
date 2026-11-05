@@ -60,9 +60,10 @@ def is_connected(tiles: set[int], adj: list[list[int]]) -> bool:
 
 
 def validate_plan(
-    assignment: list[int], adj: list[list[int]], pop: list[float], n_districts: int, band: float
+    assignment: list[int], adj: list[list[int]], pop: list[float], n_districts: int, band: float,
+    muni: list | None = None, muni_lock: bool = False,
 ) -> list[str]:
-    """Return a list of problems (empty == valid)."""
+    """Return a list of problems (empty == valid). With muni_lock, a district may not mix munis."""
     problems = []
     lo, hi = size_band(sum(pop), n_districts, band)
     for d in range(n_districts):
@@ -75,6 +76,8 @@ def validate_plan(
             problems.append(f"district {d} pop {p} outside [{lo}, {hi}]")
         if not is_connected(tiles, adj):
             problems.append(f"district {d} disconnected")
+        if muni_lock and muni is not None and len({muni[i] or "" for i in tiles}) > 1:
+            problems.append(f"district {d} mixes municipalities")
     if any(a < 0 or a >= n_districts for a in assignment):
         problems.append("assignment label out of range")
     return problems

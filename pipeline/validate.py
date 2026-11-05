@@ -13,6 +13,7 @@ from pathlib import Path
 
 import numpy as np
 
+import search
 import solver
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -24,6 +25,41 @@ PAR_RANGES = {"w1": {"t1": (2, 4), "t2": (3, 6)}}
 
 def load_boards():
     return sorted(p for p in BOARDS.glob("*.json"))
+
+
+def seats_needed(goal: dict, k: int) -> int:
+    return goal.get("minSeatsByK", {}).get(str(k), goal["minSeats"])
+
+
+def check_solutions(board: dict) -> list[str]:
+    """Boards too big to enumerate ship known solutions: each must be valid and meet its goal."""
+    errs = []
+    tiles, adj, rules = board["tiles"], board["adjacency"], board["rules"]
+    parties = [p["id"] for p in board["parties"]]
+    pop = [t["pop"] for t in tiles]
+    muni = [t["muni"] for t in tiles]
+    gov = [t["votes"][parties[0]] / sum(t["votes"].values()) for t in tiles]
+    start = board["start"]
+    errs += [f"start: {p}" for p in solver.validate_plan(start, adj, pop, rules["nDistricts"], rules["band"], muni, rules["muniLock"])]
+    for task in board["tasks"]:
+        goal = task.get("goal")
+        sols = board.get("solutions", {}).get(task["id"], [])
+        if not goal:
+            continue
+        if not sols:
+            errs.append(f"task {task['id']}: no known solutions")
+        for j, s in enumerate(sols):
+            k, plan = s["k"], s["plan"]
+            probs = solver.validate_plan(plan, adj, pop, k, rules["band"], muni, s["lock"])
+            if probs:
+                errs.append(f"task {task['id']} solution {j}: {probs[0]}")
+            g = search.Goal(parties.index(goal["party"]), seats_needed(goal, k), goal["swings"])
+            if not search.goal_met(plan, k, gov, g):
+                errs.append(f"task {task['id']} solution {j}: goal not met")
+        g0 = search.Goal(parties.index(goal["party"]), seats_needed(goal, rules["nDistricts"]), goal["swings"])
+        if search.goal_met(start, rules["nDistricts"], gov, g0):
+            errs.append(f"task {task['id']}: start map already meets the goal")
+    return errs
 
 
 def check_board(board: dict) -> list[str]:
@@ -47,6 +83,8 @@ def check_board(board: dict) -> list[str]:
     if len(board["start"]) != n:
         errs.append("start length != n tiles")
     errs += [f"start: {p}" for p in solver.validate_plan(board["start"], adj, pop, k, rules["band"])]
+    if board.get("solutions"):
+        errs += check_solutions(board)
 
     # Exhaustive checks for unit-pop boards small enough to enumerate.
     if all(p == 1 for p in pop) and n <= 30:
@@ -87,9 +125,12 @@ def write_fixtures(board: dict, n_random: int = 40, seed: int = 0):
     start = board["start"]
 
     plans = [list(start)]
-    lo, hi = solver.int_band(n, k, rules["band"])
-    valid = solver.enumerate_plans(adj, k, lo, hi)
-    for i in rng.choice(len(valid), n_random // 2, replace=False):
+    if n <= 30:
+        lo, hi = solver.int_band(n, k, rules["band"])
+        valid = [list(map(int, p)) for p in solver.enumerate_plans(adj, k, lo, hi)]
+    else:
+        valid = [s["plan"] for s in board.get("solutions", {}).get(board["tasks"][0]["id"], []) if s["k"] == k]
+    for i in rng.choice(len(valid), min(len(valid), n_random // 2), replace=False):
         perm = rng.permutation(k)  # non-canonical labels exercise Hungarian matching
         plans.append([int(perm[d]) for d in valid[i]])
     for _ in range(n_random // 2):  # random single/multi-tile edits, often invalid
@@ -100,8 +141,10 @@ def write_fixtures(board: dict, n_random: int = 40, seed: int = 0):
         plans.append(p)
 
     cases = []
+    muni = [t["muni"] for t in tiles]
     for p in plans:
         problems = solver.validate_plan(p, adj, pop, k, rules["band"])
+        locked = solver.validate_plan(p, adj, pop, k, rules["band"], muni, True)
         arr = np.array([p])
         m = solver.one_hot(arr, k)
         dv = solver.district_votes(m, votes)[0]
@@ -109,6 +152,7 @@ def write_fixtures(board: dict, n_random: int = 40, seed: int = 0):
         cases.append({
             "assignment": p,
             "valid": not problems,
+            "validLocked": not locked,
             "tilesChanged": solver.hungarian_tiles_changed(start, p, k),
             "winners": winners,
         })

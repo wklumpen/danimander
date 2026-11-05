@@ -15,6 +15,7 @@ import { Menu } from "./ui/Menu";
 import { MapPanels, Reveal } from "./ui/Reveal";
 import { Session, type WinResult } from "./ui/Session";
 import { Splash, shouldShowSplash } from "./ui/Splash";
+import { World2, board2 } from "./ui/World2";
 import { ShareText } from "./ui/ShareText";
 import { shareText } from "./game/shareText";
 import { cardSvg } from "./ui/shareCard";
@@ -23,7 +24,7 @@ const board = boardJson as unknown as BoardT;
 const playable = board.tasks.filter((t) => t.goal);
 const boards: Record<string, BoardT> = { [board.id]: board };
 
-type Route = { view: "play" } | { view: "daily"; date: string } | { view: "info" } | { view: "shared"; assignment: number[] };
+type Route = { view: "play" } | { view: "w2" } | { view: "daily"; date: string } | { view: "info" } | { view: "shared"; assignment: number[] };
 
 /** `#daily` = today; `#daily=YYYY-MM-DD` = that day's puzzle (no future ones, none before #1). */
 function dailyDate(h: string): string {
@@ -36,6 +37,7 @@ function routeFromHash(): Route {
   const h = location.hash.slice(1);
   if (h === "info" || h === "timeline" || h.startsWith("card-")) return { view: "info" };
   if (h === "daily" || h.startsWith("daily=")) return { view: "daily", date: dailyDate(h) };
+  if (h === "w2") return { view: "w2" };
   if (h.startsWith("b=")) {
     const plan = decodePlan(location.hash, (id) => boards[id]?.start);
     if (plan && boards[plan.boardId] && validatePlan(boards[plan.boardId], plan.assignment).length === 0)
@@ -70,6 +72,7 @@ function Game() {
   const [maps, setMaps] = useState<Record<string, number[]>>({});
   const [menu, setMenu] = useState(false);
   const [howto, setHowto] = useState(false);
+  const [w2Playing, setW2Playing] = useState(true);
   const [intro, setIntro] = useState(() => shouldShowSplash() && routeFromHash().view !== "info");
   const today = albertaDate();
   const dailyN = puzzleNumber(today);
@@ -97,6 +100,8 @@ function Game() {
   let body: React.ReactNode;
   if (route.view === "info") {
     body = <Info onBack={() => go("")} />;
+  } else if (route.view === "w2") {
+    body = <World2 onInfo={() => go("info")} onStage={setW2Playing} />;
   } else if (route.view === "daily") {
     body = <Daily key={route.date} date={route.date} n={puzzleNumber(route.date)} onBack={() => go("")} />;
   } else if (route.view === "shared") {
@@ -113,6 +118,7 @@ function Game() {
       <Reveal
         board={board}
         maps={maps}
+        onNext={() => go("w2")}
         onAgain={() => {
           setMaps({});
           startTask(0);
@@ -145,7 +151,8 @@ function Game() {
     );
   }
 
-  const fits = route.view === "daily" || (route.view === "play" && taskIdx < playable.length);
+  const fits =
+    route.view === "daily" || (route.view === "w2" && w2Playing) || (route.view === "play" && taskIdx < playable.length);
   return (
     <main className={fits ? "fit" : undefined}>
       <Sprite />
@@ -167,11 +174,12 @@ function Game() {
           dailyNumber={dailyN}
           onPick={startTask}
           onDaily={() => go("daily")}
+          onWorld={(id) => go(id === "w2" ? "w2" : "")}
           onAlberta={() => setMenu(false)}
           onClose={() => setMenu(false)}
         />
       )}
-      {howto && <HowTo board={board} onClose={() => setHowto(false)} />}
+      {howto && <HowTo board={route.view === "w2" ? board2 : board} onClose={() => setHowto(false)} />}
       {intro && <Splash onClose={() => setIntro(false)} />}
     </main>
   );

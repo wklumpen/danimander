@@ -11,11 +11,11 @@ import { shareText } from "../game/shareText";
 import { tilesChanged } from "../game/drift";
 import { cardSvg } from "./shareCard";
 
-export function MapPanels({ board, panels }: { board: BoardT; panels: [string, number[]][] }) {
-  const k = board.rules.nDistricts;
+export function MapPanels({ board, panels }: { board: BoardT; panels: [string, number[], number?][] }) {
   return (
     <div className="panels" style={{ gridTemplateColumns: `repeat(${panels.length}, 1fr)` }}>
-      {panels.map(([title, a]) => {
+      {panels.map(([title, a, kk]) => {
+        const k = kk ?? board.rules.nDistricts;
         const s = seatTally(board, winners(board, a, k));
         return (
           <figure key={title}>
@@ -34,7 +34,7 @@ export function MapPanels({ board, panels }: { board: BoardT; panels: [string, n
   );
 }
 
-export function Reveal({ board, maps, onAgain }: { board: BoardT; maps: Record<string, number[]>; onAgain: () => void }) {
+export function Reveal({ board, maps, onAgain, onNext }: { board: BoardT; maps: Record<string, number[]>; onAgain: () => void; onNext?: () => void }) {
   const t1 = maps.t1 ?? board.examples?.t1 ?? board.start;
   const t2 = maps.t2 ?? board.examples?.t2 ?? board.start;
   const pct = `${((board.stats.goalShare?.t1 ?? 0) * 100).toFixed(1)}%`;
@@ -77,6 +77,7 @@ export function Reveal({ board, maps, onAgain }: { board: BoardT; maps: Record<s
         )}
       />
       <ShareButtons svg={svg} link={link} />
+      {onNext && <button className="primary" onClick={onNext}>{copy.reveal.next}</button>}
       <button onClick={onAgain}>{copy.reveal.again}</button>
     </div>
   );

@@ -1,6 +1,6 @@
 import type { Board } from "./types";
 
-export type DistrictProblem = { district: number; kind: "size" | "disconnected" | "empty"; pop: number };
+export type DistrictProblem = { district: number; kind: "size" | "disconnected" | "empty" | "mixed"; pop: number };
 
 export function sizeBand(totalPop: number, nDistricts: number, band: number): [number, number] {
   const quota = totalPop / nDistricts;
@@ -29,8 +29,16 @@ function isConnected(tiles: number[], inDistrict: (t: number) => boolean, adj: n
   return seen.size === tiles.length;
 }
 
-/** All problems with a plan. Empty array == valid (mirrors pipeline/solver.py validate_plan). */
-export function validatePlan(board: Board, assignment: number[], nDistricts = board.rules.nDistricts): DistrictProblem[] {
+/**
+ * All problems with a plan. Empty array == valid (mirrors pipeline/solver.py validate_plan).
+ * `muniLock`: a district may not mix municipalities (city tiles have `muni`; county tiles are null).
+ */
+export function validatePlan(
+  board: Board,
+  assignment: number[],
+  nDistricts = board.rules.nDistricts,
+  muniLock = board.rules.muniLock,
+): DistrictProblem[] {
   const total = board.tiles.reduce((s, t) => s + t.pop, 0);
   const [lo, hi] = sizeBand(total, nDistricts, board.rules.band);
   const pops = districtPops(board, assignment, nDistricts);
@@ -44,6 +52,8 @@ export function validatePlan(board: Board, assignment: number[], nDistricts = bo
     if (pops[d] < lo - 1e-9 || pops[d] > hi + 1e-9) problems.push({ district: d, kind: "size", pop: pops[d] });
     if (!isConnected(tiles, (t) => assignment[t] === d, board.adjacency))
       problems.push({ district: d, kind: "disconnected", pop: pops[d] });
+    if (muniLock && new Set(tiles.map((t) => board.tiles[t].muni ?? "")).size > 1)
+      problems.push({ district: d, kind: "mixed", pop: pops[d] });
   }
   return problems;
 }

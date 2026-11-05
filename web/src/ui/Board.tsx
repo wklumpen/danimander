@@ -24,12 +24,16 @@ type Props = {
   onAssign?: (tile: number, district: number) => void;
   /** District the hint suggests; pulses on top of the normal target highlight. */
   hintDistrict?: number | null;
+  /** Draw city-limit lines (World 2+, while the municipal lock is on). */
+  cityLimits?: boolean;
   mini?: boolean;
   label?: string;
 };
 
 export function Board(props: Props) {
-  const { board, assignment, nDistricts, selected = null, targets, invalid, ghost, onTap, onAssign, hintDistrict = null, mini, label } = props;
+  const { board, assignment, nDistricts, selected = null, targets, invalid, ghost, onTap, onAssign, hintDistrict = null, mini, label, cityLimits } = props;
+  // Binary boards (World 1, dailies) show hex counts on badges; split-vote boards show the leader's %.
+  const binary = useMemo(() => board.tiles.every((t) => Object.values(t.votes).every((v) => v === 0 || v === 1)), [board]);
   const picking = selected !== null && !!targets;
   const allEdges = useMemo(() => edges(board.tiles), [board]);
   const vb = useMemo(() => viewBox(board.tiles), [board]);
@@ -45,8 +49,9 @@ export function Board(props: Props) {
     const x = cs.reduce((s, c) => s + c[0], 0) / cs.length;
     const y = cs.reduce((s, c) => s + c[1], 0) / cs.length;
     const [a, b] = parties.map((p) => totals[d][p]);
+    const pct = Math.round((Math.max(a, b) / (a + b || 1)) * 100);
     const leader = a === b ? null : a > b ? parties[0] : parties[1];
-    return { d, x, y, a, b, leader };
+    return { d, x, y, a, b, leader, pct };
   });
 
   // Pointer: tap-tap and drag share one path. Down selects; up over a different tile moves.
@@ -115,8 +120,12 @@ export function Board(props: Props) {
         </pattern>
       </defs>
       {board.tiles.map((t, i) => {
-        const party = parties.find((p) => t.votes[p] > 0) ?? parties[0];
-        const pi = parties.indexOf(party);
+        // Lean = party with more votes on this hex; tint strength shows by how much.
+        const pi = (t.votes[parties[1]] ?? 0) > (t.votes[parties[0]] ?? 0) ? 1 : 0;
+        const party = parties[pi];
+        const tot = parties.reduce((s, p) => s + (t.votes[p] ?? 0), 0) || 1;
+        const lean = (t.votes[party] ?? 0) / tot; // 0.5..1
+        const strength = binary ? 1 : Math.min(1, 0.35 + (lean - 0.5) * 3.2);
         const d = assignment[i];
         const isTarget = picking && targets!.has(d);
         const [cx, cy] = center(t);
@@ -135,7 +144,8 @@ export function Board(props: Props) {
             onPointerDown={interactive ? onDown(i) : undefined}
             aria-label={interactive ? `${board.parties[pi].label} ${t.icon}, district ${d + 1}` : undefined}
           >
-            <polygon points={hexPoints(t, 0.96)} className={`fill-${colorOf(board, party)}`} />
+            {!binary && <polygon points={hexPoints(t, 0.96)} className="fill-base" />}
+            <polygon points={hexPoints(t, 0.96)} className={`fill-${colorOf(board, party)}`} fillOpacity={strength} />
             {isTarget && <polygon points={hexPoints(t, 1)} className={d === hintDistrict ? "wash hinted" : "wash"} pointerEvents="none" />}
             {invalid?.has(d) && <polygon points={hexPoints(t, 0.96)} fill="url(#hatch)" pointerEvents="none" />}
             {!mini && (
@@ -147,6 +157,10 @@ export function Board(props: Props) {
           </g>
         );
       })}
+      {cityLimits &&
+        allEdges
+          .filter((e) => e.b !== null && (board.tiles[e.a].muni ?? "") !== (board.tiles[e.b].muni ?? ""))
+          .map((e, k) => <line key={`c${k}`} {...lineProps(e)} className="city-limit" />)}
       {ghost &&
         allEdges
           .filter((e) => e.b !== null && board.start[e.a] !== board.start[e.b])
@@ -176,7 +190,7 @@ export function Board(props: Props) {
               <circle cx={b.x} cy={b.y} r={mini ? 0.7 : 0.42} className={b.leader ? `fill-${colorOf(board, b.leader)} strong` : "fill-tie"} />
               {!mini && (
                 <text x={b.x} y={b.y + 0.13} className={b.leader ? `on-${colorOf(board, b.leader)}` : undefined}>
-                  {b.a}–{b.b}
+                  {binary ? `${b.a}–${b.b}` : `${b.pct}%`}
                 </text>
               )}
             </g>

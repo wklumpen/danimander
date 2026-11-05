@@ -18,11 +18,12 @@ type Props = {
   dailyNumber: number;
   onPick: (taskIdx: number) => void;
   onDaily: () => void;
+  onWorld: (id: string) => void;
   onAlberta: () => void;
   onClose: () => void;
 };
 
-export function Menu({ board, dailyId, dailyNumber, onPick, onDaily, onAlberta, onClose }: Props) {
+export function Menu({ board, dailyId, dailyNumber, onPick, onDaily, onWorld, onAlberta, onClose }: Props) {
   const tasks = board.tasks.filter((t) => t.goal);
   return (
     <div className="overlay" role="dialog" aria-label={copy.menu.title} onClick={onClose}>
@@ -38,7 +39,13 @@ export function Menu({ board, dailyId, dailyNumber, onPick, onDaily, onAlberta, 
         {copy.menu.worlds.map((w) => (
           <section key={w.id} className={w.available ? "" : "locked"}>
             <h3>{w.title}</h3>
-            {w.available ? (
+            {w.available && w.id !== board.id ? (
+              <ol>
+                <li>
+                  <button onClick={() => onWorld(w.id)}>{copy.menu.play} →</button>
+                </li>
+              </ol>
+            ) : w.available ? (
               <ol>
                 {tasks.map((t, i) => (
                   <li key={t.id}>

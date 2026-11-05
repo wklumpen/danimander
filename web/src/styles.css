@@ -165,3 +165,31 @@ body:has(.og) { margin: 0; overflow: hidden; }
 main.fit:has(> .reveal) { height: auto; min-height: 100dvh; overflow: visible; }
 
 .share-text { margin: 0; padding: 10px 12px; background: #fff; border: 1.5px dashed var(--muted); border-radius: 10px; font: 600 0.95rem/1.45 system-ui, sans-serif; white-space: pre-wrap; word-break: break-word; text-align: left; user-select: all; -webkit-user-select: all; }
+
+.powers { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; flex: none; }
+.power { min-height: 44px; padding: 3px 2px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; border-radius: 10px; border: 1.5px solid var(--ink); background: #fff8e1; line-height: 1.05; }
+.power-icon { font-size: 1.05rem; }
+.power-name { font-size: 0.62rem; font-weight: 700; }
+.power.used { background: #eee; opacity: 0.45; text-decoration: line-through; }
+.power.hinted { animation: pulse-border 0.9s ease-in-out infinite alternate; }
+@keyframes pulse-border { from { box-shadow: 0 0 0 0 var(--select); } to { box-shadow: 0 0 0 4px var(--select); } }
+.power-sheet .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.power-sheet h2 { margin-top: 0; }
+button.link.inline { min-height: 0; padding: 0 0 0 6px; font-size: inherit; }
+.meter { display: inline-flex; align-items: center; gap: 4px; }
+.meter-bar { display: inline-block; width: 54px; height: 8px; border-radius: 4px; background: #e6e1d6; overflow: hidden; vertical-align: middle; }
+.meter-bar i { display: block; height: 100%; background: var(--muted); transition: width 0.3s; }
+.meter.over .meter-bar i { background: var(--invalid); }
+.meter.over { color: var(--invalid); font-weight: 700; }
+.city-limit { stroke: var(--ink); stroke-width: 0.07; stroke-dasharray: 0.12 0.1; opacity: 0.75; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) { .power.hinted { animation: none; box-shadow: 0 0 0 3px var(--select); } }
+.fill-base { fill: #f4efe4; }
+.intro-line { font-size: 1.15rem; margin: 6px 0; }
+.intro-punch { font-size: 1.35rem; font-weight: 800; margin: 10px 0 4px; }
+
+/* Many seats: labels go above, boxes shrink, so long party names fit. */
+.seatbar.stacked { --seat: 18px; --seat-gap: 6px; flex-wrap: wrap; row-gap: 2px; padding-top: 2px; }
+.seatbar.stacked .seat-label { flex: 1 1 45%; font-size: 0.85rem; }
+.seatbar.stacked .seat-label b { font-size: 1.05rem; }
+.seatbar.stacked .seat-row { order: 3; flex: 0 0 auto; margin: 4px auto 3px; }
+main.fit { padding-left: 8px; padding-right: 8px; }

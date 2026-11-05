@@ -26,6 +26,12 @@ export const ICONS: Record<string, string> = {
       <rect x="2.5" y="17.5" width="3" height="3" fill="#2a2630"/>
     </g>
     <circle cx="12" cy="9" r="1.3" fill="#e0a526"/>`,
+  city: `<g stroke="#2a2630" stroke-width="0.9" stroke-linejoin="round">
+      <rect x="3" y="10" width="5" height="12" fill="#c9cfd8"/>
+      <rect x="9" y="3" width="6" height="19" fill="#aab4c3"/>
+      <rect x="16" y="7" width="5" height="15" fill="#c9cfd8"/>
+    </g>
+    <g fill="#ffe79a"><rect x="10.5" y="5.5" width="1.2" height="1.4"/><rect x="12.6" y="5.5" width="1.2" height="1.4"/><rect x="10.5" y="9" width="1.2" height="1.4"/><rect x="12.6" y="9" width="1.2" height="1.4"/><rect x="10.5" y="12.5" width="1.2" height="1.4"/><rect x="12.6" y="12.5" width="1.2" height="1.4"/><rect x="4.4" y="12.5" width="1.2" height="1.4"/><rect x="17.4" y="9.5" width="1.2" height="1.4"/><rect x="17.4" y="13" width="1.2" height="1.4"/><rect x="4.4" y="16" width="1.2" height="1.4"/></g>`,
   mountain: `<path d="M1 22 9 7l4 6 3-4 7 13z" fill="#7d8a99" stroke="#2a2630" stroke-width="1" stroke-linejoin="round"/>
     <path d="M9 7l-2.6 4.9 1.6-0.9 1 1.2 1.2-1.4 1.1 0.5z" fill="#fff"/>
     <path d="M16 9l-1.6 2.1 1 0.4 0.6-0.6 0.8 0.7 0.6-0.5z" fill="#fff"/>`,

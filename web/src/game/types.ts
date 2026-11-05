@@ -12,7 +12,19 @@ export type Tile = {
   outline: [number, number][] | null;
 };
 
-export type Goal = { party: PartyId; minSeats: number; swings: number[] };
+export type Goal = {
+  party: PartyId;
+  minSeats: number;
+  /** Seats needed by district count, when Bonus Seat can change it (e.g. {"7": 4, "8": 5}). */
+  minSeatsByK?: Record<string, number>;
+  swings: number[];
+};
+
+export function seatsNeeded(goal: Goal, nDistricts: number): number {
+  return goal.minSeatsByK?.[String(nDistricts)] ?? goal.minSeats;
+}
+
+export type PowerId = "seat" | "limits" | "hearings" | "toss";
 
 export type Task = {
   id: string;
@@ -22,6 +34,10 @@ export type Task = {
   success: string | null;
   /** Short label for this task's map in reveals, e.g. "Orange wins". */
   caption?: string;
+  /** Party holding the pen (World 2+). */
+  role?: PartyId;
+  /** Story lines shown before the task starts. */
+  intro?: string[];
 };
 
 export type Board = {
@@ -32,7 +48,14 @@ export type Board = {
   tiles: Tile[];
   adjacency: number[][];
   start: number[];
-  rules: { nDistricts: number; band: number; muniLock: boolean; powers: string[] };
+  rules: {
+    nDistricts: number;
+    band: number;
+    muniLock: boolean;
+    powers: PowerId[];
+    /** Max "public scrutiny" (tiles changed vs baseline) before the election is blocked. */
+    driftCap?: number;
+  };
   tasks: Task[];
   stats: {
     nPlans: number;
@@ -40,6 +63,8 @@ export type Board = {
     goalShare?: Record<string, number>;
   };
   examples?: Record<string, number[]>;
+  /** Known goal plans per task for boards too big to enumerate (hint targets). */
+  solutions?: Record<string, { k: number; lock: boolean; plan: number[] }[]>;
 };
 
 export type PlanState = {

@@ -3,8 +3,8 @@
  * Enumerates every valid plan once; hints and daily puzzles are cheap lookups on top.
  */
 import { matchDistricts, tilesChanged } from "./drift";
-import type { Board, Goal } from "./types";
-import { moveTargets } from "./validate";
+import type { Board, Goal, PowerId } from "./types";
+import { moveTargets, validatePlan } from "./validate";
 
 /** All partitions into n connected districts of size in [lo, hi], canonical labels. */
 export function enumeratePlans(adj: number[][], n: number, lo: number, hi: number): Int8Array[] {
@@ -130,24 +130,45 @@ export function goalPlans(board: Board, goal: Goal): Int8Array[] {
 }
 
 export type Hint = { tile: number; district: number; remaining: number };
+export type HintResult = Hint | { card: PowerId } | null;
+export type HintCtx = { taskId?: string; nDistricts?: number; muniLock?: boolean; canPlay?: (id: PowerId) => boolean };
+
+/** Goal-satisfying target plans the hint can steer toward under the current rules. */
+function hintTargets(board: Board, goal: Goal, ctx: HintCtx): number[][] {
+  const k = ctx.nDistricts ?? board.rules.nDistricts;
+  const lock = ctx.muniLock ?? board.rules.muniLock;
+  const known = ctx.taskId ? board.solutions?.[ctx.taskId] : undefined;
+  if (known) {
+    return known
+      .filter((s) => s.k === k && validatePlan(board, s.plan, k, lock).length === 0)
+      .map((s) => s.plan);
+  }
+  return k === board.rules.nDistricts ? goalPlans(board, goal).map((p) => Array.from(p)) : [];
+}
 
 /**
  * Suggest one move toward the nearest goal-satisfying plan. The suggested move is always legal
  * (tile is adjacent to the target district); prefers moves out of oversized into undersized districts.
+ * If no known plan is reachable under the current rules, suggests the power card that opens one up.
  */
-export function hint(board: Board, goal: Goal, current: number[]): Hint | null {
-  const targets = goalPlans(board, goal);
-  if (!targets.length) return null;
-  let best: Int8Array | null = null;
+export function hint(board: Board, goal: Goal, current: number[], ctx: HintCtx = {}): HintResult {
+  const k = ctx.nDistricts ?? board.rules.nDistricts;
+  const targets = hintTargets(board, goal, ctx);
+  if (!targets.length) {
+    const known = ctx.taskId ? board.solutions?.[ctx.taskId] ?? [] : [];
+    if (ctx.canPlay?.("limits") && known.some((s) => s.k === k)) return { card: "limits" };
+    if (ctx.canPlay?.("seat") && known.some((s) => s.k === k + 1)) return { card: "seat" };
+    return null;
+  }
+  let best: number[] | null = null;
   let bestD = Infinity;
   for (const p of targets) {
-    const d = tilesChanged(Array.from(p), current);
+    const d = tilesChanged(p, current);
     if (d < bestD) [best, bestD] = [p, d];
   }
   if (!best || bestD === 0) return null;
   // match[planDistrict] = current label
-  const match = matchDistricts(Array.from(best), current);
-  const k = board.rules.nDistricts;
+  const match = matchDistricts(best, current);
   const size = new Array(k).fill(0);
   current.forEach((d) => size[d]++);
   const quota = board.tiles.length / k;

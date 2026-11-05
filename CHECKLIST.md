@@ -19,3 +19,6 @@ Every claim has sources; all were opened and read on 2026-11-05 except where not
 - [ ] Share PNG on real iOS Safari and Android Chrome (native share sheet with file; fallback download).
 - [ ] First-time player completes World 1 Task 1 in < 60 s without instructions (hallway test).
 - [ ] Lighthouse mobile ≥ 90 on the deployed site (local preview: perf 100, a11y 100).
+
+## Known UI limits
+- [ ] World 2 hexes are ~33px wide on 360×640 phones (37px at 375×667, 43px at 412×780) — below the 44px target. Options: compact power-card row, shorter prompt, or pinch-zoom on the board.

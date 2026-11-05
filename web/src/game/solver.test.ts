@@ -24,7 +24,7 @@ describe("hint", () => {
     let a = [...board.start];
     for (let step = 0; step < 30; step++) {
       const h = hint(board, task.goal!, a);
-      if (!h) break;
+      if (!h || "card" in h) break;
       expect(moveTargets(board, a, h.tile).has(h.district)).toBe(true);
       a = [...a];
       a[h.tile] = h.district;
@@ -99,7 +99,7 @@ describe("districts never disappear", () => {
         let h = [...a];
         for (let i = 0; i < 40; i++) {
           const m = hint(board, board.tasks[0].goal!, h);
-          if (!m) break;
+          if (!m || "card" in m) break;
           expect(moveTargets(board, h, m.tile).has(m.district)).toBe(true);
           h = [...h];
           h[m.tile] = m.district;
