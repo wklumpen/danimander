@@ -45,3 +45,33 @@ export function viewBox(tiles: Tile[], pad = 0.3): string {
   const y0 = Math.min(...ys) - 1 - pad;
   return `${x0} ${y0} ${Math.max(...xs) + S3 / 2 + pad - x0} ${Math.max(...ys) + 1 + pad - y0}`;
 }
+
+/**
+ * Where to put a district's badge so it always sits inside the district, however odd the shape.
+ * Prefers a corner shared by three of its hexes (a badge there is wholly inside), then the middle
+ * of an edge shared by two, then a lone hex's centre; nearest the district's centroid wins.
+ */
+export function labelPoint(tiles: Pick<Tile, "q" | "r">[]): [number, number] | null {
+  if (!tiles.length) return null;
+  const cs = tiles.map(center);
+  const cx = cs.reduce((s, c) => s + c[0], 0) / cs.length;
+  const cy = cs.reduce((s, c) => s + c[1], 0) / cs.length;
+  const corners = new Map<string, { p: [number, number]; n: number }>();
+  for (const c of cs)
+    for (let k = 0; k < 6; k++) {
+      const p = corner(c, k);
+      const key = `${p[0].toFixed(3)},${p[1].toFixed(3)}`;
+      const e = corners.get(key);
+      if (e) e.n++;
+      else corners.set(key, { p, n: 1 });
+    }
+  const near = (ps: [number, number][]) =>
+    ps.reduce((best, p) => ((p[0] - cx) ** 2 + (p[1] - cy) ** 2 < (best[0] - cx) ** 2 + (best[1] - cy) ** 2 ? p : best));
+  const triples = [...corners.values()].filter((e) => e.n === 3).map((e) => e.p);
+  if (triples.length) return near(triples);
+  const mids: [number, number][] = [];
+  for (let i = 0; i < cs.length; i++)
+    for (let j = i + 1; j < cs.length; j++)
+      if (Math.hypot(cs[i][0] - cs[j][0], cs[i][1] - cs[j][1]) < S3 + 1e-6) mids.push([(cs[i][0] + cs[j][0]) / 2, (cs[i][1] + cs[j][1]) / 2]);
+  return near(mids.length ? mids : cs);
+}

@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { districtVotes } from "../game/score";
 import { colorOf, type Board as BoardT } from "../game/types";
-import { center, edges, hexPoints, viewBox } from "./hex";
+import { center, edges, hexPoints, labelPoint, viewBox } from "./hex";
 
 // Shape backup for colour (SPEC accessibility): ▲ first party, ● second.
 const GLYPHS = ["▲", "●"];
@@ -44,10 +44,9 @@ export function Board(props: Props) {
 
   const totals = districtVotes(board, assignment, nDistricts);
   const badges = Array.from({ length: nDistricts }, (_, d) => {
-    const cs = board.tiles.filter((_, i) => assignment[i] === d).map(center);
-    if (!cs.length) return null;
-    const x = cs.reduce((s, c) => s + c[0], 0) / cs.length;
-    const y = cs.reduce((s, c) => s + c[1], 0) / cs.length;
+    const at = labelPoint(board.tiles.filter((_, i) => assignment[i] === d));
+    if (!at) return null;
+    const [x, y] = at;
     const [a, b] = parties.map((p) => totals[d][p]);
     const pct = Math.round((Math.max(a, b) / (a + b || 1)) * 100);
     const leader = a === b ? null : a > b ? parties[0] : parties[1];
