@@ -38,12 +38,12 @@ main.fit .board-wrap .board { height: 100%; }
 .fill-blue.strong { fill: var(--blue); }
 .fill-orange.strong { fill: var(--orange); }
 .fill-tie { fill: #888; }
-.tile.dim { opacity: 0.45; }
+.tile.dim { opacity: 0.5; }
 .tile { transition: opacity 0.15s; }
-.wash { fill: var(--select); opacity: 0.45; }
+.wash { fill: var(--select); opacity: 0.1; }
 .wash.hinted { animation: pulse 0.9s ease-in-out infinite alternate; }
-@keyframes pulse { from { opacity: 0.2; } to { opacity: 0.7; } }
-.target-edge { stroke: var(--select); stroke-width: 0.2; }
+@keyframes pulse { from { opacity: 0.15; } to { opacity: 0.55; } }
+.target-edge { stroke: #f2c500; stroke-width: 0.1; }
 .tile.selected polygon:first-child { transform: scale(0.86); }
 .lifted { fill: none; stroke: var(--select); stroke-width: 0.18; stroke-dasharray: 0.25 0.12; animation: march 0.8s linear infinite; }
 @keyframes march { to { stroke-dashoffset: -0.74; } }
@@ -63,7 +63,7 @@ main.fit .board-wrap .board { height: 100%; }
 .muted { color: var(--muted); }
 .warn { color: var(--invalid); font-weight: 600; }
 .controls { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; }
-.controls button { padding: 4px 2px; font-size: 0.85rem; min-height: 44px; line-height: 1.1; }
+.controls button { padding: 4px 2px; font-size: 0.85rem; min-height: 40px; line-height: 1.1; }
 button { min-height: 44px; font: inherit; border-radius: 10px; border: 1.5px solid var(--ink); background: #fff; color: var(--ink); padding: 6px 10px; cursor: pointer; }
 button:disabled { opacity: 0.4; cursor: default; }
 button[aria-pressed="true"] { background: var(--ink); color: #fff; }
@@ -92,7 +92,7 @@ button.primary { background: var(--ink); color: #fff; font-weight: 700; }
 .mascot { width: 36px; height: 36px; }
 footer { margin-top: auto; padding-top: 4px; text-align: center; font-size: 0.8rem; color: var(--muted); flex: none; }
 footer p { margin: 0; }
-footer a { color: var(--ink); font-weight: 600; font-size: 0.95rem; }
+footer a { color: var(--muted); font-weight: 500; font-size: 0.85rem; text-decoration-color: #cfc9bd; }
 a { color: var(--ink); }
 button.link { border: none; background: none; padding: 0; min-height: 44px; color: var(--ink); text-decoration: underline; text-align: left; }
 
@@ -210,9 +210,10 @@ main.fit { padding-left: 8px; padding-right: 8px; }
 .border-purple { border-color: var(--purple) !important; }
 .border-green { border-color: var(--green) !important; }
 
-.ctl { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0; padding: 2px; line-height: 1; }
-.ctl-ic { font-size: 1.45rem; line-height: 1.1; }
-.ctl-lb { font-size: 0.68rem; font-weight: 600; letter-spacing: 0.01em; }
+.ctl { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1px; padding: 2px; line-height: 1; border-color: #d6d0c4; color: var(--muted); background: transparent; }
+.ctl-ic { font-size: 1.1rem; line-height: 1.1; filter: grayscale(1); opacity: 0.75; }
+.ctl-lb { font-size: 0.66rem; font-weight: 500; letter-spacing: 0.01em; }
+.ctl[aria-pressed="true"] { background: #e9e4d9; color: var(--ink); }
 
 .daily-head { text-align: center; margin: 0; line-height: 1.25; }
 .daily-brand { font-weight: 800; font-size: 1rem; letter-spacing: -0.01em; color: var(--ink); white-space: nowrap; }
@@ -229,3 +230,27 @@ main.fit { padding-left: 8px; padding-right: 8px; }
 .mla-message { margin: 6px 0 10px; padding: 8px 10px; background: var(--paper); border-left: 3px solid var(--muted); font-style: italic; }
 .act-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
 .act-actions a { font-weight: 700; }
+
+/* Red district badge: what's wrong (hex count vs needed, or "split"). */
+.badge.fix rect { fill: var(--invalid); stroke: #fff; stroke-width: 0.05; }
+.badge.fix text { font-size: 0.3px; }
+.arrow path { fill: none; stroke: var(--ink); stroke-width: 0.1; stroke-linecap: round; }
+.arrow polygon { fill: var(--ink); }
+
+/* How to play: one step per page, tiny example maps. */
+.howto { width: 100%; }
+.howto h2 { margin: 6px 0 2px; font-size: 1.2rem; }
+.howto p { margin: 4px 0; }
+.howto-art { display: flex; align-items: center; justify-content: center; gap: 4px; height: 150px; margin-top: 6px; }
+.howto-frame { margin: 0; flex: 0 1 46%; display: flex; flex-direction: column; align-items: center; height: 100%; }
+.howto-art > .howto-frame:only-child { flex-basis: 60%; }
+.howto-frame .board { flex: 1; min-height: 0; width: 100%; cursor: default; }
+.howto-frame .tile { cursor: default; }
+.howto-frame figcaption { font-size: 0.72rem; color: var(--muted); font-weight: 600; }
+.howto-to { font-size: 1.4rem; color: var(--muted); }
+.howto ul { text-align: left; }
+.dots { display: flex; justify-content: center; gap: 6px; margin: 10px 0 0; }
+.dots i { width: 7px; height: 7px; border-radius: 50%; background: #d6d0c4; }
+.dots i.on { background: var(--ink); }
+.howto button.primary { margin: 10px 0 2px; }
+button.link.skip { display: block; margin: 0 auto; min-height: 36px; color: var(--muted); font-size: 0.85rem; }

@@ -8,7 +8,7 @@ import { albertaDate, dailyBoard, puzzleNumber } from "./game/daily";
 import { decodePlan } from "./game/encode";
 import type { Board as BoardT } from "./game/types";
 import { validatePlan } from "./game/validate";
-import { HowTo } from "./ui/HowTo";
+import { HowTo, seenHowTo } from "./ui/HowTo";
 import { iconSymbols } from "./ui/icons";
 import { Info } from "./ui/Info";
 import { Menu } from "./ui/Menu";
@@ -74,7 +74,7 @@ function Game() {
   const [run, setRun] = useState(0); // bump to remount the session
   const [maps, setMaps] = useState<Record<string, number[]>>({});
   const [menu, setMenu] = useState(false);
-  const [howto, setHowto] = useState(false);
+  const [howto, setHowto] = useState<number | null>(null); // open at this step; null = closed
   const [w2Playing, setW2Playing] = useState(true);
   const [intro, setIntro] = useState(() => shouldShowSplash() && routeFromHash().view !== "info");
   const today = albertaDate();
@@ -86,6 +86,15 @@ function Game() {
     return () => window.removeEventListener("hashchange", on);
   }, []);
   useEffect(() => track("w1-start"), []);
+
+  // A puzzle is on screen: fit it to one phone screen, and teach the controls on first sight.
+  const fits =
+    route.view === "daily" || (route.view === "w2" && w2Playing) || (route.view === "play" && taskIdx < playable.length);
+  useEffect(() => {
+    if (intro || !fits) return;
+    if (!seenHowTo(false)) setHowto(0);
+    else if (route.view === "w2" && !seenHowTo(true)) setHowto(99); // just the World 2 page
+  }, [intro, fits, route.view]);
 
   const go = (hash: string) => {
     if (hash) location.hash = hash;
@@ -154,15 +163,13 @@ function Game() {
     );
   }
 
-  const fits =
-    route.view === "daily" || (route.view === "w2" && w2Playing) || (route.view === "play" && taskIdx < playable.length);
   return (
     <main className={fits ? "fit" : undefined}>
       <Sprite />
       <nav className="topnav">
         <button className="icon-btn" onClick={() => setMenu(true)} aria-label={copy.nav.menu}>☰</button>
         <svg className="mascot" viewBox="0 0 24 24" aria-hidden><use href="#ic-salamander" /></svg>
-        <button className="icon-btn" onClick={() => setHowto(true)} aria-label={copy.nav.howto}>
+        <button className="icon-btn" onClick={() => setHowto(0)} aria-label={copy.nav.howto}>
           <span className="info-i">?</span>
         </button>
       </nav>
@@ -182,7 +189,7 @@ function Game() {
           onClose={() => setMenu(false)}
         />
       )}
-      {howto && <HowTo board={route.view === "w2" ? board2 : board} onClose={() => setHowto(false)} />}
+      {howto !== null && <HowTo board={route.view === "w2" ? board2 : board} startAt={howto} onClose={() => setHowto(null)} />}
       {intro && <Splash onClose={() => setIntro(false)} />}
     </main>
   );

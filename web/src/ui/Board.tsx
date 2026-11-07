@@ -1,6 +1,7 @@
 import { useMemo, useRef, useState } from "react";
 import { districtVotes } from "../game/score";
 import { colorOf, type Board as BoardT } from "../game/types";
+import { intBand } from "../game/solver";
 import { center, edges, hexPoints, labelPoint, viewBox } from "./hex";
 
 // Shape backup for colour (SPEC accessibility): ▲ first party, ● second.
@@ -28,10 +29,12 @@ type Props = {
   cityLimits?: boolean;
   mini?: boolean;
   label?: string;
+  /** Tutorial art: an arrow from one tile's centre to another's. */
+  arrow?: [number, number];
 };
 
 export function Board(props: Props) {
-  const { board, assignment, nDistricts, selected = null, targets, invalid, ghost, onTap, onAssign, hintDistrict = null, mini, label, cityLimits } = props;
+  const { board, assignment, nDistricts, selected = null, targets, invalid, ghost, onTap, onAssign, hintDistrict = null, mini, label, cityLimits, arrow } = props;
   // Binary boards (World 1, dailies) show hex counts on badges; split-vote boards show the leader's %.
   const binary = useMemo(() => board.tiles.every((t) => Object.values(t.votes).every((v) => v === 0 || v === 1)), [board]);
   const picking = selected !== null && !!targets;
@@ -43,14 +46,19 @@ export function Board(props: Props) {
   const interactive = !!onTap;
 
   const totals = districtVotes(board, assignment, nDistricts);
+  const [lo, hi] = intBand(board.tiles.length, nDistricts, board.rules.band);
   const badges = Array.from({ length: nDistricts }, (_, d) => {
-    const at = labelPoint(board.tiles.filter((_, i) => assignment[i] === d));
+    const members = board.tiles.filter((_, i) => assignment[i] === d);
+    const at = labelPoint(members);
     if (!at) return null;
     const [x, y] = at;
     const [a, b] = parties.map((p) => totals[d][p]);
     const pct = Math.round((Math.max(a, b) / (a + b || 1)) * 100);
     const leader = a === b ? null : a > b ? parties[0] : parties[1];
-    return { d, x, y, a, b, leader, pct };
+    // A red district's badge says what's wrong: hex count vs what's needed, or "split".
+    const n = members.length;
+    const fix = invalid?.has(d) ? (n < lo || n > hi ? `${n}/${lo === hi ? lo : n < lo ? lo : hi}` : "split") : null;
+    return { d, x, y, a, b, leader, pct, fix };
   });
 
   // Pointer: tap-tap and drag share one path. Down selects; up over a different tile moves.
@@ -181,9 +189,16 @@ export function Board(props: Props) {
       {picking && selected !== null && (
         <polygon points={hexPoints(board.tiles[selected], 0.9)} className="lifted" pointerEvents="none" />
       )}
+      {arrow && <Arrow from={center(board.tiles[arrow[0]])} to={center(board.tiles[arrow[1]])} />}
       {badges.map(
         (b) =>
-          b && (
+          b &&
+          (b.fix && !mini ? (
+            <g key={`${b.d}-fix`} className="badge fix" pointerEvents="none" style={{ transformOrigin: `${b.x}px ${b.y}px` }}>
+              <rect x={b.x - 0.5} y={b.y - 0.27} width={1} height={0.54} rx={0.27} />
+              <text x={b.x} y={b.y + 0.12}>{b.fix}</text>
+            </g>
+          ) : (
             // Keyed on leader so a flip remounts the badge and replays the pop animation.
             <g key={`${b.d}-${b.leader}`} className="badge" pointerEvents="none" style={{ transformOrigin: `${b.x}px ${b.y}px` }}>
               <circle cx={b.x} cy={b.y} r={mini ? 0.7 : 0.42} className={b.leader ? `fill-${colorOf(board, b.leader)} strong` : "fill-tie"} />
@@ -193,9 +208,31 @@ export function Board(props: Props) {
                 </text>
               )}
             </g>
-          ),
+          )),
       )}
     </svg>
+  );
+}
+
+function Arrow({ from: [x1, y1], to: [x2, y2] }: { from: [number, number]; to: [number, number] }) {
+  // Stop short of both centres; bow the line a little so it reads as a gesture.
+  const len = Math.hypot(x2 - x1, y2 - y1);
+  const [ux, uy] = [(x2 - x1) / len, (y2 - y1) / len];
+  const [ax, ay] = [x1 + ux * 0.35, y1 + uy * 0.35];
+  const [bx, by] = [x2 - ux * 0.45, y2 - uy * 0.45];
+  const [cx, cy] = [(ax + bx) / 2 - uy * 0.4, (ay + by) / 2 + ux * 0.4];
+  const h = 0.32; // head length
+  const [hx, hy] = [bx - cx, by - cy].map((v) => v / Math.hypot(bx - cx, by - cy));
+  const head = [
+    [bx, by],
+    [bx - hx * h - hy * h * 0.6, by - hy * h + hx * h * 0.6],
+    [bx - hx * h + hy * h * 0.6, by - hy * h - hx * h * 0.6],
+  ];
+  return (
+    <g className="arrow" pointerEvents="none">
+      <path d={`M${ax},${ay} Q${cx},${cy} ${bx},${by}`} />
+      <polygon points={head.map((p) => p.join(",")).join(" ")} />
+    </g>
   );
 }
 

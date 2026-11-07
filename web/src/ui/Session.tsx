@@ -6,7 +6,7 @@ import { w2 } from "../content/w2";
 import { tilesChanged } from "../game/drift";
 import { allowedTargets, canPlay, crossesLimit, drift, initPlay, overCap, playReducer, runElection, type PlayInit } from "../game/play";
 import { seatTally, voteShare, winners } from "../game/score";
-import { hint } from "../game/solver";
+import { hint, intBand } from "../game/solver";
 import type { Board as BoardT, PowerId, Task } from "../game/types";
 import { isLastTile, moveTargets, validatePlan } from "../game/validate";
 import { Board } from "./Board";
@@ -55,6 +55,12 @@ export function Session({ board, task, init, onWin, winActions }: Props) {
   );
   const invalid = new Set(problems.map((p) => p.district));
   const mixed = problems.some((p) => p.kind === "mixed");
+  const [lo, hi] = intBand(board.tiles.length, k, board.rules.band);
+  const whyRed = copy.hud.whyRed(
+    problems.filter((p) => p.kind === "size").map((p) => p.pop),
+    lo === hi ? `${lo}` : `${lo}–${hi}`,
+    problems.some((p) => p.kind === "disconnected"),
+  );
   const seats = seatTally(board, winners(board, play.assignment, k));
   const startSeats = useMemo(() => seatTally(board, winners(board, board.start, board.rules.nDistricts)), [board]);
   const share = useMemo(() => voteShare(board), [board]);
@@ -158,7 +164,9 @@ export function Session({ board, task, init, onWin, winActions }: Props) {
     <>
       <header>
         <h1 className="prompt"><PartyText text={task.prompt} board={board} /></h1>
-        {quip && !result && play.selected === null ? (
+        {whyRed && !result && play.selected === null ? (
+          <p className="hint warn-soft">{whyRed}</p>
+        ) : quip && !result && play.selected === null ? (
           <p key={quip.n} className="hint quip-line" aria-hidden onAnimationEnd={() => setQuip(null)}>
             <svg viewBox="0 0 24 24" aria-hidden><use href="#ic-salamander" /></svg> {quip.text}
           </p>
