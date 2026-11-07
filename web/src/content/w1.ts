@@ -40,14 +40,15 @@ export const w1 = {
       `Of ${nPlans.toLocaleString("en-CA")} possible maps, only ${pct} give Green 3 seats — you found one.`,
     core: "Same votes, different map, different winner — that's why the people who win elections shouldn't draw the map.",
     again: "Play again",
-    next: "Next: Prairie Province →",
+    next: "Next: Prairie City →",
     shareTitle: "Show someone what you did",
   },
   menu: {
     title: "Levels",
     worlds: [
       { id: "w1", title: "1 · Coulee County", available: true },
-      { id: "w2", title: "2 · Prairie Province", available: true },
+      { id: "w2", title: "2 · Prairie City", available: true },
+      { id: "w3", title: "3 · Prairie Province", available: true, play: "The full province (harder)" },
     ],
     soon: "Coming soon",
     play: "Keep the Government in power",

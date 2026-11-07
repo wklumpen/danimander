@@ -17,6 +17,8 @@ cd pipeline
 uv venv --python 3.12 .venv && uv pip install --python .venv -r requirements.txt
 .venv/bin/python board_w1.py            # search layouts; writes out/w1_candidates.txt + ../boards/w1.json
 .venv/bin/python board_w1.py --pick 3   # use a different candidate from the report
+.venv/bin/python board_w2.py            # World 2, Prairie City (small, three levels)
+.venv/bin/python board_w3.py            # World 3, Prairie Province (35 hexes; caches all maps in out/)
 .venv/bin/python validate.py --write-fixtures
 ```
 

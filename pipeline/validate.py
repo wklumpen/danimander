@@ -66,12 +66,18 @@ def check_solutions(board: dict) -> list[str]:
         best = board.get("stats", {}).get("bestDrift", {}).get(task["id"])
         if best is not None and dists and min(dists) != best:
             errs.append(f"task {task['id']}: bestDrift {best} != nearest shipped solution {min(dists)}")
-    cap = rules.get("driftCap")
-    best_a = board.get("stats", {}).get("bestDrift", {}).get(board["tasks"][0]["id"])
-    if cap is not None and best_a is not None:
-        need = best_a + rules.get("limitsScrutiny", 0)  # Task A also pays for erasing the limits
+    # A capped task that starts from the board's start map must need exactly one 🗑️ toss.
+    # (Board-level cap: applies to the first task; per-task caps: every task that doesn't continue.)
+    capped = [(t, t["driftCap"]) for t in board["tasks"] if "driftCap" in t and not t.get("continues")]
+    if rules.get("driftCap") is not None:
+        capped.append((board["tasks"][0], rules["driftCap"]))
+    for task, cap in capped:
+        best = board.get("stats", {}).get("bestDrift", {}).get(task["id"])
+        if best is None:
+            continue
+        need = best + rules.get("limitsScrutiny", 0)  # the route also pays for erasing the limits
         if not (cap < need <= 2 * cap):
-            errs.append(f"scrutiny cap {cap} must force exactly one reset (route needs {need})")
+            errs.append(f"task {task['id']}: scrutiny cap {cap} must force exactly one reset (route needs {need})")
     return errs
 
 
@@ -117,6 +123,8 @@ def check_board(board: dict) -> list[str]:
             ok = seat_counts[:, col] >= goal["minSeats"]
             if not ok.any():
                 errs.append(f"task {task['id']} unreachable")
+                continue
+            if task["par"] is None:  # no stars on this task (World 2)
                 continue
             par = int(dist[ok].min())
             if par != task["par"]:

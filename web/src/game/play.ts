@@ -62,6 +62,25 @@ export function drift(s: Pick<PlayState, "assignment" | "baseline" | "penalty">)
   return tilesChanged(s.baseline, s.assignment) + s.penalty;
 }
 
+/** The board as one task sees it: that task's power cards and scrutiny cap. */
+export function taskBoard(board: Board, task: Task): Board {
+  if (!task.powers && task.driftCap === undefined) return board;
+  return {
+    ...board,
+    rules: { ...board.rules, powers: task.powers ?? board.rules.powers, driftCap: task.driftCap ?? board.rules.driftCap },
+  };
+}
+
+/**
+ * Start of a task that continues from the player's previous map (limits already erased). Its cap
+ * must leave a route: at least half the distance (one toss) to the nearest known goal map.
+ */
+export function continueInit(board: Board, task: Task, from: number[], nDistricts: number): PlayInit {
+  const base = task.driftCap ?? board.rules.driftCap ?? 0;
+  const d = Math.min(...(board.solutions?.[task.id] ?? []).map((s) => tilesChanged(from, s.plan)));
+  return { assignment: from, nDistricts, muniLock: false, driftCap: Math.max(base, Math.ceil(d / 2)) };
+}
+
 /** While limits are locked, a hex may only join a district on its own side (city / town / countryside). */
 export function crossesLimit(board: Board, s: PlayState, tile: number, district: number): boolean {
   if (!s.muniLock) return false;

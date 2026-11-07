@@ -42,7 +42,7 @@ export function Menu({ board, dailyId, dailyNumber, onPick, onDaily, onWorld, on
             {w.available && w.id !== board.id ? (
               <ol>
                 <li>
-                  <button onClick={() => onWorld(w.id)}>{copy.menu.play} →</button>
+                  <button onClick={() => onWorld(w.id)}>{("play" in w && w.play) || copy.menu.play} →</button>
                 </li>
               </ol>
             ) : w.available ? (

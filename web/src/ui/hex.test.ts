@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import w1 from "../../../boards/w1.json";
 import w2 from "../../../boards/w2.json";
+import w3 from "../../../boards/w3.json";
 import type { Board } from "../game/types";
 import { labelPoint } from "./hex";
 
@@ -34,9 +35,9 @@ function badgeInside(board: Board, plan: number[], k: number) {
 }
 
 describe("labelPoint", () => {
-  it("keeps every badge inside its district on the World 2 maps", () => {
-    const b = w2 as unknown as Board;
-    badgeInside(b, b.start, 5);
+  it.each([["World 2", w2], ["World 3", w3]])("keeps every badge inside its district on the %s maps", (_, json) => {
+    const b = json as unknown as Board;
+    badgeInside(b, b.start, b.rules.nDistricts);
     for (const sols of Object.values(b.solutions ?? {})) for (const s of sols) badgeInside(b, s.plan, s.k);
   });
 

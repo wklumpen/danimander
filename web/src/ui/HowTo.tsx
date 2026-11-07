@@ -6,11 +6,10 @@ import { Board } from "./Board";
 import { AXIAL_DIRS } from "./hex";
 
 const SEEN = "dm:howto";
-const SEEN_W2 = "dm:howto-w2";
 
-export function seenHowTo(w2: boolean): boolean {
+export function seenHowTo(): boolean {
   try {
-    return !!localStorage.getItem(w2 ? SEEN_W2 : SEEN);
+    return !!localStorage.getItem(SEEN);
   } catch {
     return true; // storage disabled: don't nag on every load
   }
@@ -98,7 +97,6 @@ export function HowTo({ board, onClose, startAt = 0 }: { board: BoardT; onClose:
   const [page, setPage] = useState(Math.min(startAt, total - 1));
   const close = () => {
     markSeen(SEEN);
-    if (w2) markSeen(SEEN_W2);
     onClose();
   };
   const last = page === total - 1;
@@ -116,9 +114,9 @@ export function HowTo({ board, onClose, startAt = 0 }: { board: BoardT; onClose:
           </>
         ) : (
           <>
-            <h2>{howto.extrasTitle}</h2>
+            <h2>{howto.extrasTitle(board.title)}</h2>
             <ul>
-              {howto.extras.map((r) => (
+              {howto.extras([...new Set(board.tiles.map((t) => howto.lands[t.icon]).filter(Boolean))]).map((r) => (
                 <li key={r.text}>
                   <span className="ic" aria-hidden>{r.icon}</span>
                   <span>{r.text}</span>

@@ -38,6 +38,12 @@ export type Task = {
   role?: PartyId;
   /** Story lines shown before the task starts. */
   intro?: string[];
+  /** Power cards on this task (default: the board's). */
+  powers?: PowerId[];
+  /** Scrutiny cap on this task (default: the board's; none = no scrutiny). */
+  driftCap?: number;
+  /** Starts from the previous task's map, with the city limits already erased. */
+  continues?: boolean;
 };
 
 export type Board = {

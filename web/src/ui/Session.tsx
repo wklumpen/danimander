@@ -48,6 +48,8 @@ export function Session({ board, task, init, onWin, winActions }: Props) {
   const [hintCard, setHintCard] = useState<PowerId | null>(null);
   const [hintsUsed, setHintsUsed] = useState(0);
   const [note, setNote] = useState<string | null>(null);
+  /** Why the last tap didn't move the hex (city limits / scrutiny), shown under the goal. */
+  const [refusal, setRefusal] = useState<string | null>(null);
 
   const problems = useMemo(
     () => validatePlan(board, play.assignment, k, play.muniLock),
@@ -99,6 +101,7 @@ export function Session({ board, task, init, onWin, winActions }: Props) {
 
   const clearTransient = () => {
     setMissed(null);
+    setRefusal(null);
     setNote(null);
     setHintDistrict(null);
     setHintCard(null);
@@ -164,7 +167,9 @@ export function Session({ board, task, init, onWin, winActions }: Props) {
     <>
       <header>
         <h1 className="prompt"><PartyText text={task.prompt} board={board} /></h1>
-        {whyRed && !result && play.selected === null ? (
+        {refusal && !result ? (
+          <p className="hint warn-soft">{refusal}</p>
+        ) : whyRed && !result && play.selected === null ? (
           <p className="hint warn-soft">{whyRed}</p>
         ) : quip && !result && play.selected === null ? (
           <p key={quip.n} className="hint quip-line" aria-hidden onAnimationEnd={() => setQuip(null)}>
@@ -191,6 +196,9 @@ export function Session({ board, task, init, onWin, winActions }: Props) {
           onTap={(tile) => {
             if (result) return;
             clearTransient();
+            const d = play.assignment[tile];
+            if (play.selected !== null && tile !== play.selected && neighbours.has(d) && !targets!.has(d))
+              setRefusal(crossesLimit(board, play, play.selected, d) ? w2.lockTap(canPlay(board, play, "limits")) : w2.capBlocked);
             dispatch({ type: "tap", tile });
           }}
           onAssign={(tile, district) => {
