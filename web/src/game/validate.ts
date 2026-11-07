@@ -13,7 +13,7 @@ export function districtPops(board: Board, assignment: number[], nDistricts: num
   return pops;
 }
 
-function isConnected(tiles: number[], inDistrict: (t: number) => boolean, adj: number[][]): boolean {
+export function isConnected(tiles: number[], inDistrict: (t: number) => boolean, adj: number[][]): boolean {
   if (tiles.length === 0) return false;
   const seen = new Set([tiles[0]]);
   const stack = [tiles[0]];

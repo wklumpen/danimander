@@ -14,10 +14,12 @@ export const w1 = {
     invalid: (n: number) => (n === 1 ? "1 district needs fixing" : `${n} districts need fixing`),
     /** Why the red districts are red, in one line under the goal. */
     whyRed: (sizes: number[], need: string, split: boolean) => {
-      if (!sizes.length) return split ? "A red district is split in pieces — each must be one connected piece." : null;
+      // A split comes first: a split district's hex count doesn't help until it's whole again.
+      if (split) return "A red district is split in pieces — join it back into one.";
+      if (!sizes.length) return null;
       const s = [...sizes].sort((a, b) => b - a);
       const list = s.length === 1 ? `${s[0]}` : `${s.slice(0, -1).join(", ")} and ${s[s.length - 1]}`;
-      return `${s.length === 1 ? "A red district has" : "Red districts have"} ${list} hexes — each needs ${need}${split ? ", all touching" : ""}.`;
+      return `${s.length === 1 ? "A red district has" : "Red districts have"} ${list} hexes — each needs ${need}.`;
     },
     pickTile: "Tap a hex to pick it up.",
     pickTarget: "Tap a yellow district to move this hex into it.",

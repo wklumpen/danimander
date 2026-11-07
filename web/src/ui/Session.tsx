@@ -58,8 +58,9 @@ export function Session({ board, task, init, onWin, winActions }: Props) {
   const invalid = new Set(problems.map((p) => p.district));
   const mixed = problems.some((p) => p.kind === "mixed");
   const [lo, hi] = intBand(board.tiles.length, k, board.rules.band);
+  const split = new Set(problems.filter((p) => p.kind === "disconnected").map((p) => p.district));
   const whyRed = copy.hud.whyRed(
-    problems.filter((p) => p.kind === "size").map((p) => p.pop),
+    problems.filter((p) => p.kind === "size" && !split.has(p.district)).map((p) => p.pop),
     lo === hi ? `${lo}` : `${lo}–${hi}`,
     problems.some((p) => p.kind === "disconnected"),
   );

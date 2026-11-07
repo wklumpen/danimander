@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from "react";
 import { districtVotes } from "../game/score";
 import { colorOf, type Board as BoardT } from "../game/types";
 import { intBand } from "../game/solver";
+import { isConnected } from "../game/validate";
 import { center, edges, hexPoints, labelPoint, viewBox } from "./hex";
 
 // Shape backup for colour (SPEC accessibility): ▲ first party, ● second.
@@ -55,9 +56,11 @@ export function Board(props: Props) {
     const [a, b] = parties.map((p) => totals[d][p]);
     const pct = Math.round((Math.max(a, b) / (a + b || 1)) * 100);
     const leader = a === b ? null : a > b ? parties[0] : parties[1];
-    // A red district's badge says what's wrong: hex count vs what's needed, or "split".
+    // A red district's badge says what's wrong: "split" first (its count is beside the point
+    // until it's one piece again), else hex count vs what's needed.
     const n = members.length;
-    const fix = invalid?.has(d) ? (n < lo || n > hi ? `${n}/${lo === hi ? lo : n < lo ? lo : hi}` : "split") : null;
+    const split = () => !isConnected(assignment.flatMap((a, i) => (a === d ? [i] : [])), (t) => assignment[t] === d, board.adjacency);
+    const fix = invalid?.has(d) ? (split() || (n >= lo && n <= hi) ? "split" : `${n}/${lo === hi ? lo : n < lo ? lo : hi}`) : null;
     return { d, x, y, a, b, leader, pct, fix };
   });
 
